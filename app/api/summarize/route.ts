@@ -1,7 +1,7 @@
 import { extractText } from "unpdf";
 
-const OLLAMA_BASE_URL =
-  process.env.OLLAMA_BASE_URL || "http://localhost:11434/v1";
+const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
 
 export async function POST(request: Request) {
   const formData = await request.formData();
@@ -12,14 +12,14 @@ export async function POST(request: Request) {
   if (!file || !prompt) {
     return Response.json(
       { error: "Both a PDF file and a prompt are required." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   if (file.type !== "application/pdf") {
     return Response.json(
       { error: "Only PDF files are accepted." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -31,17 +31,15 @@ export async function POST(request: Request) {
     if (!paperText.trim()) {
       return Response.json(
         { error: "Could not extract text from the PDF." },
-        { status: 422 }
+        { status: 422 },
       );
     }
-
-    const model = process.env.OLLAMA_MODEL || "qwen3:8b";
 
     const ollamaRes = await fetch(`${OLLAMA_BASE_URL}/chat/completions`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model,
+        model: OLLAMA_MODEL,
         stream: true,
         messages: [
           {
@@ -59,10 +57,7 @@ export async function POST(request: Request) {
 
     if (!ollamaRes.ok || !ollamaRes.body) {
       const text = await ollamaRes.text();
-      return Response.json(
-        { error: `Ollama error: ${text}` },
-        { status: 502 }
-      );
+      return Response.json({ error: `Ollama error: ${text}` }, { status: 502 });
     }
 
     // Transform Ollama's SSE stream into our own JSON-lines stream
@@ -129,7 +124,7 @@ export async function POST(request: Request) {
     console.error("Summarization failed:", error);
     return Response.json(
       { error: `Failed to process the paper: ${message}` },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
