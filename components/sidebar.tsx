@@ -24,7 +24,7 @@ export function Sidebar({ file, onFileSelect }: SidebarProps) {
 
     return (
         <aside className="flex h-full min-w-64 flex-1 flex-col border-r">
-            <div className="flex items-center gap-2 px-4 py-5">
+            <div className="flex items-center justify-center gap-2 px-4 py-5">
                 <h1 className="text-base font-semibold tracking-tight">research.</h1>
             </div>
 
@@ -50,15 +50,11 @@ export function Sidebar({ file, onFileSelect }: SidebarProps) {
             </div>
 
             <ScrollArea className="flex-1 px-3 py-2">
-                {file ? (
+                {file && (
                     <div className="bg-accent text-accent-foreground flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium">
                         <FileText className="text-primary size-4 shrink-0" />
                         <span className="truncate">{file.name}</span>
                     </div>
-                ) : (
-                    <p className="text-muted-foreground px-3 py-2 text-xs">
-                        No PDF uploaded yet.
-                    </p>
                 )}
             </ScrollArea>
         </aside>

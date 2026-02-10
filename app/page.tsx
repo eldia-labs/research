@@ -13,7 +13,7 @@ export default function Page() {
         <div className="flex h-screen w-screen overflow-hidden">
             <Sidebar file={file} onFileSelect={setFile} />
 
-            <div className="h-full shrink-0 border-x">
+            <div className="h-full shrink-0">
                 <PdfViewer file={file} />
             </div>
 

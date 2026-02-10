@@ -146,23 +146,13 @@ export function ChatPanel({ file }: ChatPanelProps) {
 
     return (
         <div className="flex h-full min-w-80 flex-1 flex-col border-l">
-            <div className="px-4 py-3 shrink-0">
+            <div className="px-4 py-5 shrink-0">
                 <h2 className="text-sm font-semibold">Chat</h2>
             </div>
 
             <Separator />
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.length === 0 && (
-                    <div className="flex h-full items-center justify-center">
-                        <p className="text-muted-foreground text-center text-xs">
-                            {file
-                                ? "Ask a question about your paper."
-                                : "Upload a PDF to start chatting."}
-                        </p>
-                    </div>
-                )}
-
                 {messages.map((msg, i) => (
                     <div key={i} className="space-y-1">
                         {msg.role === "user" ? (
