@@ -61,12 +61,6 @@ export function Sidebar({ file, onFileSelect }: SidebarProps) {
                     </p>
                 )}
             </ScrollArea>
-
-            <Separator />
-
-            <div className="text-muted-foreground px-4 py-3 text-[0.65rem]">
-                Drop a PDF to get started
-            </div>
         </aside>
     );
 }

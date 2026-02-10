@@ -142,9 +142,6 @@ export function ChatPanel({ file }: ChatPanelProps) {
         <div className="flex h-full min-w-80 flex-1 flex-col border-l">
             <div className="px-4 py-3 shrink-0">
                 <h2 className="text-sm font-semibold">Chat</h2>
-                <p className="text-muted-foreground text-xs">
-                    Ask questions about the paper
-                </p>
             </div>
 
             <Separator />
@@ -223,7 +220,7 @@ export function ChatPanel({ file }: ChatPanelProps) {
                             handleSubmit(e);
                         }
                     }}
-                    placeholder={file ? "Ask a question…" : "Upload a PDF first…"}
+                    placeholder={"Ask a question…"}
                     className="resize-none text-sm min-h-[36px] max-h-[120px]"
                     rows={1}
                     disabled={!file || loading}
