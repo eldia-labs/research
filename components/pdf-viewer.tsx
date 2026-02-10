@@ -47,7 +47,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
         return (
             <div
                 ref={containerRef}
-                className="flex h-full aspect-[612/792] flex-col items-center justify-center gap-2 bg-muted/30 text-center overflow-hidden"
+                className="flex h-full aspect-[612/792] flex-col items-center justify-center gap-2 text-center overflow-hidden"
             >
                 <p className="text-muted-foreground text-sm">
                     Upload a PDF to view it here.
@@ -57,7 +57,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
     }
 
     return (
-        <div ref={containerRef} className="h-full aspect-[612/792] overflow-y-auto overflow-x-hidden bg-muted/30">
+        <div ref={containerRef} className="h-full aspect-[612/792] overflow-y-auto overflow-x-hidden">
             <ReactPdfDocument
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }: { numPages: number }) => setNumPages(n)}

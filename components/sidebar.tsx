@@ -23,7 +23,7 @@ export function Sidebar({ file, onFileSelect }: SidebarProps) {
     }
 
     return (
-        <aside className="bg-sidebar text-sidebar-foreground flex h-full min-w-64 flex-1 flex-col border-r">
+        <aside className="flex h-full min-w-64 flex-1 flex-col border-r">
             <div className="flex items-center gap-2 px-4 py-5">
                 <h1 className="text-base font-semibold tracking-tight">research.</h1>
             </div>
