@@ -1,16 +1,22 @@
 "use client";
 
 import {
+    ArrowUp,
     ChevronDown,
     ChevronUp,
     Loader2,
-    Send,
+    Square,
 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+    PromptInput,
+    PromptInputAction,
+    PromptInputActions,
+    PromptInputTextarea,
+} from "@/components/ui/prompt-input";
 import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 
 interface Message {
     role: "user" | "assistant";
@@ -210,34 +216,40 @@ export function ChatPanel({ file }: ChatPanelProps) {
 
             <Separator />
 
-            <form onSubmit={handleSubmit} className="flex gap-2 p-3 shrink-0">
-                <Textarea
+            <div className="p-3 shrink-0">
+                <PromptInput
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter" && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSubmit(e);
-                        }
-                    }}
-                    placeholder={"Ask a question…"}
-                    className="resize-none text-sm min-h-[36px] max-h-[120px]"
-                    rows={1}
-                    disabled={!file || loading}
-                />
-                <Button
-                    type="submit"
-                    size="icon"
-                    disabled={!file || loading || !input.trim()}
-                    className="shrink-0 self-end"
+                    onValueChange={setInput}
+                    isLoading={loading}
+                    onSubmit={() => handleSubmit({ preventDefault: () => { } } as FormEvent)}
+                    disabled={!file}
+                    maxHeight={120}
                 >
-                    {loading ? (
-                        <Loader2 className="animate-spin" />
-                    ) : (
-                        <Send />
-                    )}
-                </Button>
-            </form>
+                    <PromptInputTextarea
+                        placeholder="Ask a question…"
+                        className="text-sm"
+                    />
+                    <PromptInputActions className="justify-end pt-2">
+                        <PromptInputAction
+                            tooltip={loading ? "Stop generation" : "Send message"}
+                        >
+                            <Button
+                                variant="default"
+                                size="icon"
+                                className="h-8 w-8 rounded-full"
+                                disabled={!file || loading || !input.trim()}
+                                onClick={() => handleSubmit({ preventDefault: () => { } } as FormEvent)}
+                            >
+                                {loading ? (
+                                    <Square className="size-4 fill-current" />
+                                ) : (
+                                    <ArrowUp className="size-4" />
+                                )}
+                            </Button>
+                        </PromptInputAction>
+                    </PromptInputActions>
+                </PromptInput>
+            </div>
         </div>
     );
 }
