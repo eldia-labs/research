@@ -4,7 +4,6 @@ import { FileText, Plus } from "lucide-react";
 import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 
 interface SidebarProps {
@@ -25,7 +24,7 @@ export function Sidebar({ file, onFileSelect }: SidebarProps) {
     return (
         <aside className="flex h-full min-w-64 flex-1 flex-col border-r">
             <div className="flex items-center justify-center gap-2 px-4 py-5">
-                <h1 className="text-base font-semibold tracking-tight">research.</h1>
+                <h1 className="text-base font-semibold tracking-tight">research<span className="text-primary">.</span></h1>
             </div>
 
             <Separator />
@@ -49,14 +48,14 @@ export function Sidebar({ file, onFileSelect }: SidebarProps) {
                 />
             </div>
 
-            <ScrollArea className="flex-1 px-3 py-2">
+            <div className="flex-1 px-3 py-2">
                 {file && (
                     <div className="bg-accent text-accent-foreground flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium">
                         <FileText className="text-primary size-4 shrink-0" />
                         <span className="truncate">{file.name}</span>
                     </div>
                 )}
-            </ScrollArea>
+            </div>
         </aside>
     );
 }
