@@ -17,7 +17,7 @@ const tabs: { id: ActiveSection; label: string; icon: React.ElementType }[] = [
 
 export function SectionNav({ active, onChange }: SectionNavProps) {
     return (
-        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-neutral-700 bg-neutral-800 px-2 py-2 shadow-lg xl:hidden">
+        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-border bg-card px-2 py-2 shadow-lg xl:hidden">
             {tabs.map((tab) => {
                 const isActive = active === tab.id;
                 return (
@@ -27,7 +27,7 @@ export function SectionNav({ active, onChange }: SectionNavProps) {
                         onClick={() => onChange(tab.id)}
                         className={`relative flex items-center justify-center rounded-xl p-2.5 transition-colors duration-150 ${isActive
                             ? "bg-neutral-700 text-white"
-                            : "text-neutral-400 hover:text-neutral-200"
+                            : "text-muted-foreground hover:text-neutral-200"
                             }`}
                         aria-label={tab.label}
                     >
