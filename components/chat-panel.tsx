@@ -27,11 +27,12 @@ interface Message {
 
 interface ChatPanelProps {
     file: File | null;
+    compact?: boolean;
     collapsed: boolean;
     onToggle: () => void;
 }
 
-export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
+export function ChatPanel({ file, compact, collapsed, onToggle }: ChatPanelProps) {
     const [messages, setMessages] = useState<Message[]>([]);
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
@@ -147,7 +148,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
         setShowReasoning((prev) => ({ ...prev, [index]: !prev[index] }));
     }
 
-    if (collapsed) {
+    if (!compact && collapsed) {
         return (
             <div className="relative flex h-full shrink-0">
                 <button
@@ -167,16 +168,18 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
     }
 
     return (
-        <div className="relative flex h-full flex-1 min-w-0">
-            <button
-                type="button"
-                onDoubleClick={onToggle}
-                className="group relative z-10 flex shrink-0 cursor-col-resize items-center justify-center"
-                aria-label="Collapse chat"
-            >
-                <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
-                <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
-            </button>
+        <div className={`relative flex h-full flex-1 min-w-0 ${compact ? "pb-20" : ""}`}>
+            {!compact && (
+                <button
+                    type="button"
+                    onDoubleClick={onToggle}
+                    className="group relative z-10 flex shrink-0 cursor-col-resize items-center justify-center"
+                    aria-label="Collapse chat"
+                >
+                    <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
+                    <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
+                </button>
+            )}
 
             <div className="flex h-full flex-1 min-w-0 flex-col overflow-hidden">
                 <div className="px-4 py-5 shrink-0">
