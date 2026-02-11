@@ -34,7 +34,12 @@ export function PdfViewer({ file }: PdfViewerProps) {
 
     const containerRef = useCallback((node: HTMLDivElement | null) => {
         if (node) {
-            setPageWidth(node.clientWidth);
+            const observer = new ResizeObserver((entries) => {
+                for (const entry of entries) {
+                    setPageWidth(Math.floor(entry.contentRect.width));
+                }
+            });
+            observer.observe(node);
         }
     }, []);
 
@@ -47,7 +52,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
         return (
             <div
                 ref={containerRef}
-                className="flex h-full aspect-[612/792] flex-col items-center justify-center gap-2 text-center overflow-hidden"
+                className="flex h-full w-full flex-col items-center justify-center gap-2 text-center overflow-hidden"
             >
                 <p className="text-muted-foreground text-sm">
                     Upload a PDF to view it here.
@@ -57,7 +62,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
     }
 
     return (
-        <div ref={containerRef} className="h-full aspect-[612/792] overflow-y-auto overflow-x-hidden">
+        <div ref={containerRef} className="h-full w-full overflow-y-auto overflow-x-hidden">
             <ReactPdfDocument
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }: { numPages: number }) => setNumPages(n)}
