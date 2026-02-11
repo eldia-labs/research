@@ -41,7 +41,6 @@ export default function Page() {
                     <div className={`h-full ${activeSection === "files" ? "block" : "hidden"}`}>
                         <Sidebar
                             file={file}
-                            compact
                             collapsed={false}
                             onFileSelect={(f) => {
                                 setFile(f);
@@ -56,7 +55,6 @@ export default function Page() {
                     <div className={`h-full ${activeSection === "chat" ? "block" : "hidden"}`}>
                         <ChatPanel
                             file={file}
-                            compact
                             collapsed={false}
                             onToggle={() => { }}
                         />

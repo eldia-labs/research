@@ -8,13 +8,12 @@ import { Separator } from "@/components/ui/separator";
 
 interface SidebarProps {
     file: File | null;
-    compact?: boolean;
     collapsed: boolean;
     onFileSelect: (file: File) => void;
     onToggle: () => void;
 }
 
-export function Sidebar({ file, compact, collapsed, onFileSelect, onToggle }: SidebarProps) {
+export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -25,9 +24,9 @@ export function Sidebar({ file, compact, collapsed, onFileSelect, onToggle }: Si
     }
 
     return (
-        <div className={`relative flex h-full ${compact ? "flex-1 min-w-0" : collapsed ? "shrink-0" : "flex-1 min-w-0"}`}>
+        <div className={`relative flex h-full ${collapsed ? "shrink-0" : "flex-1 min-w-0"}`}>
             <aside
-                className={`flex h-full flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${compact ? "flex-1" : collapsed ? "w-12" : "flex-1"}`}
+                className={`flex h-full flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${collapsed ? "w-12" : "flex-1"}`}
             >
                 {collapsed ? (
                     <div className="flex h-full flex-col items-center gap-3 py-3">
@@ -93,17 +92,15 @@ export function Sidebar({ file, compact, collapsed, onFileSelect, onToggle }: Si
                 )}
             </aside>
 
-            {!compact && (
-                <button
-                    type="button"
-                    onDoubleClick={onToggle}
-                    className="group relative z-10 flex shrink-0 cursor-col-resize items-center justify-center"
-                    aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-                >
-                    <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
-                    <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
-                </button>
-            )}
+            <button
+                type="button"
+                onDoubleClick={onToggle}
+                className="group relative z-10 hidden xl:flex shrink-0 cursor-col-resize items-center justify-center"
+                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+                <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
+                <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
+            </button>
         </div>
     );
 }
