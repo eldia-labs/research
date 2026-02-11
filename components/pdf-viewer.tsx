@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 const ReactPdfDocument = dynamic(
     () => import("react-pdf").then((mod) => {
@@ -43,9 +43,16 @@ export function PdfViewer({ file }: PdfViewerProps) {
         }
     }, []);
 
-    const fileUrl = useMemo(() => {
-        if (!file) return null;
-        return URL.createObjectURL(file);
+    const [fileUrl, setFileUrl] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (!file) {
+            setFileUrl(null);
+            return;
+        }
+        const url = URL.createObjectURL(file);
+        setFileUrl(url);
+        return () => URL.revokeObjectURL(url);
     }, [file]);
 
     if (!fileUrl) {
