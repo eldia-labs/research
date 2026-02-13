@@ -17,7 +17,7 @@ const tabs: { id: ActiveSection; label: string; icon: React.ElementType }[] = [
 
 export function SectionNav({ active, onChange }: SectionNavProps) {
     return (
-        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-2xl border border-border bg-card px-2 py-2 shadow-lg xl:hidden">
+        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-input bg-input/20 dark:bg-input/30 px-2 py-2 shadow-xs xl:hidden">
             {tabs.map((tab) => {
                 const isActive = active === tab.id;
                 return (
@@ -25,9 +25,9 @@ export function SectionNav({ active, onChange }: SectionNavProps) {
                         key={tab.id}
                         type="button"
                         onClick={() => onChange(tab.id)}
-                        className={`relative flex items-center justify-center rounded-xl p-2.5 transition-colors duration-150 ${isActive
-                            ? "bg-neutral-700 text-white"
-                            : "text-muted-foreground hover:text-neutral-200"
+                        className={`relative flex items-center justify-center rounded-lg p-2.5 transition-colors duration-150 ${isActive
+                            ? "bg-primary text-primary-foreground"
+                            : "text-muted-foreground hover:text-foreground"
                             }`}
                         aria-label={tab.label}
                     >

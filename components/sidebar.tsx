@@ -33,7 +33,7 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="size-8"
+                            className="size-8 rounded-lg border border-input bg-input/20 dark:bg-input/30"
                             onClick={() => fileInputRef.current?.click()}
                         >
                             <Plus className="size-4" />
@@ -46,7 +46,7 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
                             onChange={handleFileChange}
                         />
                         {file && (
-                            <div className="bg-accent text-primary flex items-center justify-center rounded-md p-1.5">
+                            <div className="border border-input bg-input/20 dark:bg-input/30 text-primary flex items-center justify-center rounded-lg p-1.5">
                                 <FileText className="size-4 shrink-0" />
                             </div>
                         )}
@@ -65,7 +65,7 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
                             <Button
                                 variant="outline"
                                 size="lg"
-                                className="w-full justify-start gap-2"
+                                className="w-full justify-start gap-2 rounded-lg border-input bg-input/20 dark:bg-input/30 shadow-xs"
                                 onClick={() => fileInputRef.current?.click()}
                             >
                                 <Plus className="size-4" />
@@ -82,10 +82,13 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
 
                         <div className="flex-1 px-3 py-2">
                             {file && (
-                                <div className="bg-accent text-accent-foreground flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium">
+                                <button
+                                    type="button"
+                                    className="border border-input bg-input/20 dark:bg-input/30 text-foreground flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs/relaxed font-medium shadow-xs transition-all hover:bg-input/50 hover:text-foreground"
+                                >
                                     <FileText className="text-primary size-4 shrink-0" />
                                     <span className="truncate">{file.name}</span>
-                                </div>
+                                </button>
                             )}
                         </div>
                     </>

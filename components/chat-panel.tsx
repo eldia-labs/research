@@ -211,7 +211,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
                                         </button>
                                     )}
                                     {showReasoning[i] && msg.reasoning && (
-                                        <div className="bg-muted rounded-md px-3 py-2">
+                                        <div className="bg-muted rounded-lg px-3 py-2">
                                             <p className="text-muted-foreground max-h-48 overflow-y-auto whitespace-pre-wrap text-[0.65rem]/relaxed">
                                                 {msg.reasoning}
                                             </p>
@@ -259,7 +259,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
                                 <Button
                                     variant="default"
                                     size="icon"
-                                    className="h-8 w-8 rounded-full"
+                                    className="h-8 w-8 rounded-lg"
                                     disabled={!file || loading || !input.trim()}
                                     onClick={() => handleSubmit({ preventDefault: () => { } } as FormEvent)}
                                 >
