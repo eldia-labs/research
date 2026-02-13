@@ -185,7 +185,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
 
                 <Separator />
 
-                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+                <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
                     {messages.map((msg, i) => (
                         <div key={i} className="space-y-1">
                             {msg.role === "user" ? (
