@@ -190,7 +190,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
                         <div key={i} className="space-y-1">
                             {msg.role === "user" ? (
                                 <div className="flex justify-end">
-                                    <div className="bg-primary text-primary-foreground max-w-[85%] rounded-lg px-3 py-2 text-sm">
+                                    <div className="bg-primary text-primary-foreground max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words">
                                         {msg.content}
                                     </div>
                                 </div>
@@ -217,7 +217,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
                                             </p>
                                         </div>
                                     )}
-                                    <div className="bg-muted max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap">
+                                    <div className="bg-muted text-foreground max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words">
                                         {msg.content || (
                                             <span className="text-muted-foreground italic">
                                                 Thinking…
