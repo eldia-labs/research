@@ -17,7 +17,7 @@ const tabs: { id: ActiveSection; label: string; icon: React.ElementType }[] = [
 
 export function SectionNav({ active, onChange }: SectionNavProps) {
     return (
-        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-input bg-input/20 dark:bg-input/30 px-2 py-2 shadow-xs xl:hidden">
+        <nav className="fixed bottom-4 left-1/2 z-50 flex -translate-x-1/2 items-center gap-1 rounded-xl border border-input bg-background px-2 py-2 shadow-lg xl:hidden">
             {tabs.map((tab) => {
                 const isActive = active === tab.id;
                 return (
