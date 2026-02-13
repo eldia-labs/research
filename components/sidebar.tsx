@@ -7,20 +7,24 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
 interface SidebarProps {
-    file: File | null;
+    files: File[];
+    activeIndex: number | null;
     collapsed: boolean;
-    onFileSelect: (file: File) => void;
+    onFileAdd: (file: File) => void;
+    onFileClick: (index: number) => void;
     onToggle: () => void;
 }
 
-export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProps) {
+export function Sidebar({ files, activeIndex, collapsed, onFileAdd, onFileClick, onToggle }: SidebarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const selected = e.target.files?.[0];
         if (selected && selected.type === "application/pdf") {
-            onFileSelect(selected);
+            onFileAdd(selected);
         }
+        // Reset so re-uploading the same file still triggers onChange
+        e.target.value = "";
     }
 
     return (
@@ -45,11 +49,19 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
                             className="hidden"
                             onChange={handleFileChange}
                         />
-                        {file && (
-                            <div className="border border-input bg-input/20 dark:bg-input/30 text-primary flex items-center justify-center rounded-lg p-1.5">
+                        {files.map((f, i) => (
+                            <button
+                                key={`${f.name}-${f.lastModified}`}
+                                type="button"
+                                onClick={() => onFileClick(i)}
+                                className={`flex items-center justify-center rounded-lg p-1.5 border transition-colors ${i === activeIndex
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-input bg-input/20 dark:bg-input/30 text-muted-foreground hover:text-primary"
+                                    }`}
+                            >
                                 <FileText className="size-4 shrink-0" />
-                            </div>
-                        )}
+                            </button>
+                        ))}
                     </div>
                 ) : (
                     <>
@@ -80,16 +92,21 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
                             />
                         </div>
 
-                        <div className="flex-1 px-3 py-2">
-                            {file && (
+                        <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
+                            {files.map((f, i) => (
                                 <button
+                                    key={`${f.name}-${f.lastModified}`}
                                     type="button"
-                                    className="bg-primary text-primary-foreground flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs/relaxed font-medium shadow-xs transition-all"
+                                    onClick={() => onFileClick(i)}
+                                    className={`flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs/relaxed font-medium shadow-xs transition-all ${i === activeIndex
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        }`}
                                 >
                                     <FileText className="size-4 shrink-0" />
-                                    <span className="truncate">{file.name}</span>
+                                    <span className="truncate">{f.name}</span>
                                 </button>
-                            )}
+                            ))}
                         </div>
                     </>
                 )}

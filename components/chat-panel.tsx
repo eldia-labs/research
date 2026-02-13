@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/prompt-input";
 import { Separator } from "@/components/ui/separator";
 
-interface Message {
+export interface Message {
     role: "user" | "assistant";
     content: string;
     reasoning?: string;
@@ -27,12 +27,13 @@ interface Message {
 
 interface ChatPanelProps {
     file: File | null;
+    messages: Message[];
+    onMessagesChange: (messages: Message[]) => void;
     collapsed: boolean;
     onToggle: () => void;
 }
 
-export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
-    const [messages, setMessages] = useState<Message[]>([]);
+export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggle }: ChatPanelProps) {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [showReasoning, setShowReasoning] = useState<Record<number, boolean>>(
@@ -51,7 +52,7 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
         if (!file || !input.trim()) return;
 
         const userMessage: Message = { role: "user", content: input.trim() };
-        setMessages((prev) => [...prev, userMessage]);
+        onMessagesChange([...messages, userMessage]);
         setInput("");
         setLoading(true);
 
@@ -70,8 +71,9 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
 
             if (!res.ok) {
                 const data = await res.json();
-                setMessages((prev) => [
-                    ...prev,
+                onMessagesChange([
+                    ...messages,
+                    userMessage,
                     {
                         role: "assistant",
                         content: data.error || "Something went wrong.",
@@ -82,16 +84,18 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
 
             const reader = res.body?.getReader();
             if (!reader) {
-                setMessages((prev) => [
-                    ...prev,
+                onMessagesChange([
+                    ...messages,
+                    userMessage,
                     { role: "assistant", content: "No response stream." },
                 ]);
                 return;
             }
 
             // Add a placeholder assistant message
-            setMessages((prev) => [
-                ...prev,
+            const messagesWithUser = [...messages, userMessage];
+            onMessagesChange([
+                ...messagesWithUser,
                 { role: "assistant", content: "", reasoning: "" },
             ]);
 
@@ -123,19 +127,19 @@ export function ChatPanel({ file, collapsed, onToggle }: ChatPanelProps) {
                 }
 
                 // Update the last assistant message in place
-                setMessages((prev) => {
-                    const updated = [...prev];
-                    updated[updated.length - 1] = {
+                onMessagesChange([
+                    ...messagesWithUser,
+                    {
                         role: "assistant",
                         content,
                         reasoning,
-                    };
-                    return updated;
-                });
+                    },
+                ]);
             }
         } catch {
-            setMessages((prev) => [
-                ...prev,
+            onMessagesChange([
+                ...messages,
+                userMessage,
                 { role: "assistant", content: "Failed to connect to the server." },
             ]);
         } finally {

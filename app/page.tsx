@@ -1,36 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
-import { ChatPanel } from "@/components/chat-panel";
+import { ChatPanel, type Message } from "@/components/chat-panel";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { type ActiveSection, SectionNav } from "@/components/section-nav";
 import { Sidebar } from "@/components/sidebar";
 
 export default function Page() {
-    const [file, setFile] = useState<File | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
+    const [activeIndex, setActiveIndex] = useState<number | null>(null);
+    const [chatHistories, setChatHistories] = useState<Record<number, Message[]>>({});
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [chatCollapsed, setChatCollapsed] = useState(false);
     const [activeSection, setActiveSection] = useState<ActiveSection>("pdf");
 
+    const activeFile = activeIndex !== null ? files[activeIndex] ?? null : null;
+    const activeMessages = activeIndex !== null ? chatHistories[activeIndex] ?? [] : [];
     const anyCollapsed = sidebarCollapsed || chatCollapsed;
+
+    function handleAddFile(file: File) {
+        setFiles((prev) => [...prev, file]);
+        setActiveIndex(files.length);
+    }
+
+    const handleMessagesChange = useCallback(
+        (messages: Message[]) => {
+            if (activeIndex === null) return;
+            setChatHistories((prev) => ({ ...prev, [activeIndex]: messages }));
+        },
+        [activeIndex],
+    );
 
     return (
         <>
             <div className="hidden xl:flex h-screen w-screen overflow-hidden">
                 <Sidebar
-                    file={file}
+                    files={files}
+                    activeIndex={activeIndex}
                     collapsed={sidebarCollapsed}
-                    onFileSelect={setFile}
+                    onFileAdd={handleAddFile}
+                    onFileClick={setActiveIndex}
                     onToggle={() => setSidebarCollapsed((v) => !v)}
                 />
 
                 <div className={`h-full ${anyCollapsed ? "min-w-0 flex-1" : "shrink-0 aspect-[612/792]"}`}>
-                    <PdfViewer file={file} />
+                    <PdfViewer file={activeFile} />
                 </div>
 
                 <ChatPanel
-                    file={file}
+                    file={activeFile}
+                    messages={activeMessages}
+                    onMessagesChange={handleMessagesChange}
                     collapsed={chatCollapsed}
                     onToggle={() => setChatCollapsed((v) => !v)}
                 />
@@ -40,21 +61,28 @@ export default function Page() {
                 <div className="flex-1 min-h-0">
                     <div className={`h-full ${activeSection === "files" ? "block" : "hidden"}`}>
                         <Sidebar
-                            file={file}
+                            files={files}
+                            activeIndex={activeIndex}
                             collapsed={false}
-                            onFileSelect={(f) => {
-                                setFile(f);
+                            onFileAdd={(f) => {
+                                handleAddFile(f);
+                                setActiveSection("pdf");
+                            }}
+                            onFileClick={(i) => {
+                                setActiveIndex(i);
                                 setActiveSection("pdf");
                             }}
                             onToggle={() => { }}
                         />
                     </div>
                     <div className={`h-full ${activeSection === "pdf" ? "block" : "hidden"}`}>
-                        <PdfViewer file={file} />
+                        <PdfViewer file={activeFile} />
                     </div>
                     <div className={`h-full ${activeSection === "chat" ? "block" : "hidden"}`}>
                         <ChatPanel
-                            file={file}
+                            file={activeFile}
+                            messages={activeMessages}
+                            onMessagesChange={handleMessagesChange}
                             collapsed={false}
                             onToggle={() => { }}
                         />
