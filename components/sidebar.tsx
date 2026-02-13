@@ -84,9 +84,9 @@ export function Sidebar({ file, collapsed, onFileSelect, onToggle }: SidebarProp
                             {file && (
                                 <button
                                     type="button"
-                                    className="border border-input bg-input/20 dark:bg-input/30 text-foreground flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs/relaxed font-medium shadow-xs transition-all hover:bg-input/50 hover:text-foreground"
+                                    className="bg-primary text-primary-foreground flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs/relaxed font-medium shadow-xs transition-all"
                                 >
-                                    <FileText className="text-primary size-4 shrink-0" />
+                                    <FileText className="size-4 shrink-0" />
                                     <span className="truncate">{file.name}</span>
                                 </button>
                             )}
