@@ -69,7 +69,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
     }
 
     return (
-        <div ref={containerRef} className="h-full w-full overflow-y-auto overflow-x-hidden">
+        <div ref={containerRef} className="h-full w-full overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]">
             <ReactPdfDocument
                 file={fileUrl}
                 onLoadSuccess={({ numPages: n }: { numPages: number }) => setNumPages(n)}
