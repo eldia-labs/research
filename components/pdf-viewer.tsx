@@ -173,7 +173,6 @@ export function PdfViewer({ file }: PdfViewerProps) {
 
                 <div className="flex items-center gap-1">
                     <Input
-                        type="number"
                         min={1}
                         max={numPages || undefined}
                         value={pageNumber}
