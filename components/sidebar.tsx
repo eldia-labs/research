@@ -6,8 +6,11 @@ import { useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
+import type { PaperMetadata } from "@/lib/pdf";
+
 interface SidebarProps {
     files: File[];
+    paperMetadata: Record<number, PaperMetadata | null>;
     activeIndex: number | null;
     collapsed: boolean;
     onFileAdd: (file: File) => void;
@@ -15,7 +18,7 @@ interface SidebarProps {
     onToggle: () => void;
 }
 
-export function Sidebar({ files, activeIndex, collapsed, onFileAdd, onFileClick, onToggle }: SidebarProps) {
+export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAdd, onFileClick, onToggle }: SidebarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -93,20 +96,33 @@ export function Sidebar({ files, activeIndex, collapsed, onFileAdd, onFileClick,
                         </div>
 
                         <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-                            {files.map((f, i) => (
-                                <button
-                                    key={`${f.name}-${f.lastModified}`}
-                                    type="button"
-                                    onClick={() => onFileClick(i)}
-                                    className={`flex h-8 w-full items-center gap-2 rounded-lg px-2.5 text-xs/relaxed font-medium shadow-xs transition-all ${i === activeIndex
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                        }`}
-                                >
-                                    <FileText className="size-4 shrink-0" />
-                                    <span className="truncate">{f.name}</span>
-                                </button>
-                            ))}
+                            {files.map((f, i) => {
+                                const isActive = i === activeIndex;
+                                const meta = paperMetadata[i];
+
+                                return (
+                                    <button
+                                        key={`${f.name}-${f.lastModified}`}
+                                        type="button"
+                                        onClick={() => onFileClick(i)}
+                                        className={`flex w-full gap-2 rounded-lg px-2.5 text-xs font-medium shadow-xs transition-all ${isActive
+                                            ? "bg-primary text-primary-foreground py-2"
+                                            : "h-8 items-center text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            }`}
+                                    >
+                                        <FileText className={`size-4 shrink-0 ${isActive ? "mt-0.5" : ""}`} />
+                                        {isActive && meta ? (
+                                            <div className="min-w-0 text-left leading-relaxed">
+                                                <p className="truncate font-semibold">{meta.title ?? f.name}</p>
+                                                <p className="truncate opacity-80">{meta.authors?.join(", ") || "Unknown authors"}</p>
+                                                <p className="truncate opacity-60">{meta.year ?? "Unknown year"}{meta.journal ? ` · ${meta.journal}` : ""}</p>
+                                            </div>
+                                        ) : (
+                                            <span className="truncate leading-none">{meta?.title ?? f.name}</span>
+                                        )}
+                                    </button>
+                                );
+                            })}
                         </div>
                     </>
                 )}

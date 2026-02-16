@@ -1,16 +1,18 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { ChatPanel, type Message } from "@/components/chat-panel";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { type ActiveSection, SectionNav } from "@/components/section-nav";
 import { Sidebar } from "@/components/sidebar";
+import { extractPdfInfo, type PaperMetadata } from "@/lib/pdf";
 
 export default function Page() {
     const [files, setFiles] = useState<File[]>([]);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [chatHistories, setChatHistories] = useState<Record<number, Message[]>>({});
+    const [paperMetadata, setPaperMetadata] = useState<Record<number, PaperMetadata | null>>({});
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [chatCollapsed, setChatCollapsed] = useState(false);
     const [activeSection, setActiveSection] = useState<ActiveSection>("pdf");
@@ -18,9 +20,40 @@ export default function Page() {
     const activeFile = activeIndex !== null ? files[activeIndex] ?? null : null;
     const activeMessages = activeIndex !== null ? chatHistories[activeIndex] ?? [] : [];
 
+    useEffect(() => {
+        console.log(paperMetadata)
+    }, [paperMetadata]);
+
     function handleAddFile(file: File) {
+        const index = files.length;
         setFiles((prev) => [...prev, file]);
-        setActiveIndex(files.length);
+        setActiveIndex(index);
+
+        // Extract DOI / arXiv ID → fetch metadata
+        extractPdfInfo(file).then(async ({ doi, arxivId, firstPageText }) => {
+
+            try {
+                const params = new URLSearchParams();
+                if (doi) params.set("doi", doi);
+                if (arxivId) params.set("arxiv", arxivId);
+                if (firstPageText.trim()) params.set("query", firstPageText);
+
+                if (!params.size) {
+                    setPaperMetadata((prev) => ({ ...prev, [index]: null }));
+                    return;
+                }
+
+                const res = await fetch(`/api/metadata?${params.toString()}`);
+                if (res.ok) {
+                    const metadata: PaperMetadata = await res.json();
+                    setPaperMetadata((prev) => ({ ...prev, [index]: metadata }));
+                } else {
+                    setPaperMetadata((prev) => ({ ...prev, [index]: null }));
+                }
+            } catch {
+                setPaperMetadata((prev) => ({ ...prev, [index]: null }));
+            }
+        });
     }
 
     const handleMessagesChange = useCallback(
@@ -36,6 +69,7 @@ export default function Page() {
             <div className="hidden xl:flex h-screen w-screen overflow-hidden">
                 <Sidebar
                     files={files}
+                    paperMetadata={paperMetadata}
                     activeIndex={activeIndex}
                     collapsed={sidebarCollapsed}
                     onFileAdd={handleAddFile}
@@ -61,6 +95,7 @@ export default function Page() {
                     <div className={`h-full ${activeSection === "files" ? "block" : "hidden"}`}>
                         <Sidebar
                             files={files}
+                            paperMetadata={paperMetadata}
                             activeIndex={activeIndex}
                             collapsed={false}
                             onFileAdd={(f) => {
