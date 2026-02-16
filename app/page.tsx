@@ -17,7 +17,6 @@ export default function Page() {
 
     const activeFile = activeIndex !== null ? files[activeIndex] ?? null : null;
     const activeMessages = activeIndex !== null ? chatHistories[activeIndex] ?? [] : [];
-    const anyCollapsed = sidebarCollapsed || chatCollapsed;
 
     function handleAddFile(file: File) {
         setFiles((prev) => [...prev, file]);
@@ -44,7 +43,7 @@ export default function Page() {
                     onToggle={() => setSidebarCollapsed((v) => !v)}
                 />
 
-                <div className={`h-full ${anyCollapsed ? "min-w-0 flex-1" : "shrink-0 aspect-[612/792]"}`}>
+                <div className="h-full min-w-0 flex-[2]">
                     <PdfViewer file={activeFile} />
                 </div>
 

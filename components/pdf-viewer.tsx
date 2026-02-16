@@ -1,66 +1,156 @@
 "use client";
 
+import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 const ReactPdfDocument = dynamic(
     () => import("react-pdf").then((mod) => {
         mod.pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${mod.pdfjs.version}/build/pdf.worker.min.mjs`;
         return { default: mod.Document };
     }),
-    { ssr: false }
+    { ssr: false },
 );
 
 const ReactPdfPage = dynamic(
     () => import("react-pdf").then((mod) => ({ default: mod.Page })),
-    { ssr: false }
+    { ssr: false },
 );
-
-// Load react-pdf CSS styles dynamically
-if (typeof window !== "undefined") {
-    // @ts-expect-error -- CSS module import
-    import("react-pdf/dist/Page/AnnotationLayer.css");
-    // @ts-expect-error -- CSS module import
-    import("react-pdf/dist/Page/TextLayer.css");
-}
 
 interface PdfViewerProps {
     file: File | null;
 }
 
+const PDF_PAGE_RATIO = 612 / 792;
+
 export function PdfViewer({ file }: PdfViewerProps) {
-    const [numPages, setNumPages] = useState<number>(0);
-    const [pageWidth, setPageWidth] = useState<number>(0);
-
-    const containerRef = useCallback((node: HTMLDivElement | null) => {
-        if (node) {
-            const observer = new ResizeObserver((entries) => {
-                for (const entry of entries) {
-                    setPageWidth(Math.floor(entry.contentRect.width));
-                }
-            });
-            observer.observe(node);
-        }
-    }, []);
-
     const [fileUrl, setFileUrl] = useState<string | null>(null);
+    const [numPages, setNumPages] = useState(0);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [zoom, setZoom] = useState(100);
+    const [fitWidth, setFitWidth] = useState(false);
+    const [viewerWidth, setViewerWidth] = useState(0);
+    const [viewerHeight, setViewerHeight] = useState(0);
+    const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
         if (!file) {
             setFileUrl(null);
+            setNumPages(0);
+            setPageNumber(1);
             return;
         }
         const url = URL.createObjectURL(file);
         setFileUrl(url);
+        setNumPages(0);
+        setPageNumber(1);
+        setZoom(100);
+        setFitWidth(false);
         return () => URL.revokeObjectURL(url);
     }, [file]);
 
+    useEffect(() => {
+        const scrollNode = scrollContainerRef.current;
+        if (!scrollNode || numPages <= 0) return;
+
+        const pageElements = scrollNode.querySelectorAll<HTMLElement>("[data-pdf-page]");
+        if (!pageElements.length) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                const mostVisible = entries
+                    .filter((entry) => entry.isIntersecting)
+                    .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+                if (!mostVisible) return;
+                const pageValue = Number.parseInt(
+                    (mostVisible.target as HTMLElement).dataset.pdfPage ?? "",
+                    10,
+                );
+                if (!Number.isNaN(pageValue)) {
+                    setPageNumber(pageValue);
+                }
+            },
+            {
+                root: scrollNode,
+                threshold: [0.5, 0.75],
+            },
+        );
+
+        pageElements.forEach((element) => observer.observe(element));
+        return () => observer.disconnect();
+    }, [numPages, fitWidth, zoom]);
+
+    useEffect(() => {
+        if (!fileUrl) return;
+
+        const containerNode = scrollContainerRef.current;
+        if (!containerNode) return;
+
+        setViewerWidth(Math.floor(containerNode.clientWidth));
+        setViewerHeight(Math.floor(containerNode.clientHeight));
+
+        const resizeObserver = new ResizeObserver((entries) => {
+            const firstEntry = entries[0];
+            if (!firstEntry) return;
+            setViewerWidth(Math.floor(firstEntry.contentRect.width));
+            setViewerHeight(Math.floor(firstEntry.contentRect.height));
+        });
+
+        resizeObserver.observe(containerNode);
+        return () => resizeObserver.disconnect();
+    }, [fileUrl]);
+
+    const fitWidthPx = useMemo(() => {
+        if (viewerWidth <= 0) return 0;
+        return Math.max(viewerWidth - 24, 120);
+    }, [viewerWidth]);
+
+    const singlePageWidthPx = useMemo(() => {
+        if (viewerHeight <= 0) return fitWidthPx || 0;
+        const heightBasedWidth = Math.max(Math.round((viewerHeight - 24) * PDF_PAGE_RATIO), 120);
+        if (!fitWidthPx) return heightBasedWidth;
+        return Math.min(heightBasedWidth, fitWidthPx);
+    }, [fitWidthPx, viewerHeight]);
+
+    const displayWidth = useMemo(() => {
+        if (fitWidth) return fitWidthPx || undefined;
+        if (!singlePageWidthPx) return undefined;
+        return Math.max(Math.round(singlePageWidthPx * (zoom / 100)), 120);
+    }, [fitWidth, fitWidthPx, singlePageWidthPx, zoom]);
+
+    const canGoPrevious = pageNumber > 1;
+    const canGoNext = pageNumber < numPages;
+
+    const handleLoadSuccess = ({ numPages: loadedPages }: { numPages: number }) => {
+        setNumPages(loadedPages);
+        setPageNumber((currentPage) => Math.min(Math.max(currentPage, 1), loadedPages));
+    };
+
+    const scrollToPage = (nextPage: number) => {
+        if (numPages <= 0) return;
+        const clampedPage = Math.min(Math.max(nextPage, 1), numPages);
+        setPageNumber(clampedPage);
+
+        const scrollNode = scrollContainerRef.current;
+        const pageElement = scrollNode?.querySelector<HTMLElement>(`[data-pdf-page="${clampedPage}"]`);
+        pageElement?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+
+    const handlePageInputChange = (value: string) => {
+        const parsedValue = Number.parseInt(value, 10);
+        if (Number.isNaN(parsedValue)) return;
+        scrollToPage(parsedValue);
+    };
+
+    const fileName = file?.name ?? "document.pdf";
+
     if (!fileUrl) {
         return (
-            <div
-                ref={containerRef}
-                className="flex h-full w-full flex-col items-center justify-center gap-2 text-center overflow-hidden"
-            >
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-center">
                 <p className="text-muted-foreground text-sm">
                     Upload a PDF to view it here.
                 </p>
@@ -69,26 +159,111 @@ export function PdfViewer({ file }: PdfViewerProps) {
     }
 
     return (
-        <div ref={containerRef} className="h-full w-full overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable]">
-            <ReactPdfDocument
-                file={fileUrl}
-                onLoadSuccess={({ numPages: n }: { numPages: number }) => setNumPages(n)}
-                loading={
-                    <p className="text-muted-foreground text-sm pt-12 text-center">Loading PDF…</p>
-                }
-                error={
-                    <p className="text-destructive text-sm pt-12 text-center">Failed to load PDF.</p>
-                }
-            >
-                {Array.from({ length: numPages }, (_, i) => (
-                    <ReactPdfPage
-                        key={i + 1}
-                        pageNumber={i + 1}
-                        width={pageWidth || undefined}
-                        loading=""
+        <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
+            <div className="flex items-center gap-2 border-b border-border px-3 py-2">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => scrollToPage(pageNumber - 1)}
+                    disabled={!canGoPrevious}
+                >
+                    <ChevronLeft />
+                </Button>
+
+                <div className="flex items-center gap-1">
+                    <Input
+                        type="number"
+                        min={1}
+                        max={numPages || undefined}
+                        value={pageNumber}
+                        onChange={(event) => handlePageInputChange(event.target.value)}
+                        className="w-14 text-center"
                     />
-                ))}
-            </ReactPdfDocument>
+                    <span className="text-muted-foreground text-xs">/ {numPages || 0}</span>
+                </div>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => scrollToPage(pageNumber + 1)}
+                    disabled={!canGoNext}
+                >
+                    <ChevronRight />
+                </Button>
+
+                <div className="mx-2 h-5 w-px bg-border" />
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => {
+                        setFitWidth(false);
+                        setZoom((currentZoom) => Math.max(currentZoom - 10, 50));
+                    }}
+                >
+                    <Minus />
+                </Button>
+
+                <span className="text-muted-foreground w-14 text-center text-xs">{fitWidth ? "Fit" : `${zoom}%`}</span>
+
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={() => {
+                        setFitWidth(false);
+                        setZoom((currentZoom) => Math.min(currentZoom + 10, 300));
+                    }}
+                >
+                    <Plus />
+                </Button>
+
+                <Button
+                    type="button"
+                    variant={fitWidth ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setFitWidth(true)}
+                    className="ml-1"
+                >
+                    Fit width
+                </Button>
+
+                <div className="ml-auto">
+                    <Button type="button" variant="outline" size="sm" asChild>
+                        <a href={fileUrl} download={fileName}>
+                            Download
+                        </a>
+                    </Button>
+                </div>
+            </div>
+
+            <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-auto bg-muted/20">
+                <div className="mx-auto w-full max-w-full p-3">
+                    <div className="flex flex-col items-center gap-3">
+                        <ReactPdfDocument
+                            file={fileUrl}
+                            onLoadSuccess={handleLoadSuccess}
+                            loading={<p className="text-muted-foreground pt-12 text-sm">Loading PDF…</p>}
+                            error={<p className="text-destructive pt-12 text-sm">Failed to load PDF.</p>}
+                        >
+                            {Array.from({ length: numPages }, (_, index) => (
+                                <div key={index + 1} data-pdf-page={index + 1} className="w-full flex justify-center">
+                                    <ReactPdfPage
+                                        pageNumber={index + 1}
+                                        width={displayWidth}
+                                        renderAnnotationLayer={false}
+                                        renderTextLayer={false}
+                                        loading=""
+                                    />
+                                </div>
+                            ))}
+                        </ReactPdfDocument>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
