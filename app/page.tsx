@@ -25,6 +25,18 @@ export default function Page() {
     }, [paperMetadata]);
 
     function handleAddFile(file: File) {
+        const existingIndex = files.findIndex(
+            (existingFile) =>
+                existingFile.name === file.name &&
+                existingFile.size === file.size &&
+                existingFile.lastModified === file.lastModified,
+        );
+
+        if (existingIndex !== -1) {
+            setActiveIndex(existingIndex);
+            return;
+        }
+
         const index = files.length;
         setFiles((prev) => [...prev, file]);
         setActiveIndex(index);
