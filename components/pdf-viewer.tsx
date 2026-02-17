@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight, Minus, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -160,83 +160,83 @@ export function PdfViewer({ file }: PdfViewerProps) {
 
     return (
         <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
-            <div className="flex items-center gap-2 border-b border-border px-3 py-2">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => scrollToPage(pageNumber - 1)}
-                    disabled={!canGoPrevious}
-                >
-                    <ChevronLeft />
-                </Button>
+            <div className="relative flex items-center border-b border-border px-3 py-2">
+                <div className="flex flex-1 items-center justify-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => scrollToPage(pageNumber - 1)}
+                        disabled={!canGoPrevious}
+                    >
+                        <ChevronLeft />
+                    </Button>
 
-                <div className="flex items-center gap-1">
-                    <Input
-                        min={1}
-                        max={numPages || undefined}
-                        value={pageNumber}
-                        onChange={(event) => handlePageInputChange(event.target.value)}
-                        className="w-14 text-center"
-                    />
-                    <span className="text-muted-foreground text-xs">/ {numPages || 0}</span>
-                </div>
+                    <div className="flex items-center gap-1">
+                        <Input
+                            min={1}
+                            max={numPages || undefined}
+                            value={pageNumber}
+                            onChange={(event) => handlePageInputChange(event.target.value)}
+                            className="w-14 text-center"
+                        />
+                        <span className="text-muted-foreground text-xs">/ {numPages || 0}</span>
+                    </div>
 
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => scrollToPage(pageNumber + 1)}
-                    disabled={!canGoNext}
-                >
-                    <ChevronRight />
-                </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => scrollToPage(pageNumber + 1)}
+                        disabled={!canGoNext}
+                    >
+                        <ChevronRight />
+                    </Button>
 
-                <div className="mx-2 h-5 w-px bg-border" />
+                    <div className="mx-2 h-5 w-px bg-border" />
 
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => {
-                        setFitWidth(false);
-                        setZoom((currentZoom) => Math.max(currentZoom - 10, 50));
-                    }}
-                >
-                    <Minus />
-                </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => {
+                            setFitWidth(false);
+                            setZoom((currentZoom) => Math.max(currentZoom - 10, 50));
+                        }}
+                    >
+                        <Minus />
+                    </Button>
 
-                <span className="text-muted-foreground w-14 text-center text-xs">{fitWidth ? "Fit" : `${zoom}%`}</span>
+                    <span className="text-muted-foreground w-14 text-center text-xs">{fitWidth ? "Fit" : `${zoom}%`}</span>
 
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="icon-sm"
-                    onClick={() => {
-                        setFitWidth(false);
-                        setZoom((currentZoom) => Math.min(currentZoom + 10, 300));
-                    }}
-                >
-                    <Plus />
-                </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="icon-sm"
+                        onClick={() => {
+                            setFitWidth(false);
+                            setZoom((currentZoom) => Math.min(currentZoom + 10, 300));
+                        }}
+                    >
+                        <Plus />
+                    </Button>
 
-                <Button
-                    type="button"
-                    variant={fitWidth ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setFitWidth(true)}
-                    className="ml-1"
-                >
-                    Fit width
-                </Button>
-
-                <div className="ml-auto">
-                    <Button type="button" variant="outline" size="sm" asChild>
-                        <a href={fileUrl} download={fileName}>
-                            Download
-                        </a>
+                    <Button
+                        type="button"
+                        variant={fitWidth ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setFitWidth(true)}
+                        className="ml-1"
+                    >
+                        Fit width
                     </Button>
                 </div>
+
+                <Button type="button" variant="outline" size="icon-sm" asChild className="absolute right-3">
+                    <a href={fileUrl} download={fileName}>
+                        <Download />
+                    </a>
+                </Button>
             </div>
 
             <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-auto bg-muted/20">
