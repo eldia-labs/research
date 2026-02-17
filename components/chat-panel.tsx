@@ -168,7 +168,7 @@ export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggl
                     <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
                     <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
                 </button>
-                <div className="flex h-full w-8 items-start justify-center pt-5">
+                <div className="flex h-full w-12 items-start justify-center pt-5">
                     <MessageSquare className="text-muted-foreground size-4" />
                 </div>
             </div>
