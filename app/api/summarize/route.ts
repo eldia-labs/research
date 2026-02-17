@@ -1,13 +1,41 @@
+import type { Provider } from "@/lib/models";
 import { extractText } from "unpdf";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
+const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
+
+function buildEndpoint(provider: Provider): string {
+  if (provider === "openrouter") {
+    return "https://openrouter.ai/api/v1/chat/completions";
+  }
+  return `${OLLAMA_BASE_URL}/chat/completions`;
+}
+
+function buildHeaders(provider: Provider): Record<string, string> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (provider === "openrouter" && OPENROUTER_API_KEY) {
+    headers["Authorization"] = `Bearer ${OPENROUTER_API_KEY}`;
+    headers["HTTP-Referer"] = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    headers["X-Title"] = "research";
+  }
+  return headers;
+}
+
+function resolveModel(provider: Provider, modelId: string): string {
+  if (provider === "ollama") return OLLAMA_MODEL ?? "llama3";
+  return modelId;
+}
 
 export async function POST(request: Request) {
   const formData = await request.formData();
 
   const file = formData.get("file") as File | null;
   const prompt = formData.get("prompt") as string | null;
+  const provider = (formData.get("provider") as Provider) ?? "ollama";
+  const modelId = (formData.get("model") as string) ?? "ollama";
 
   if (!file || !prompt) {
     return Response.json(
@@ -23,6 +51,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (provider === "openrouter" && !OPENROUTER_API_KEY) {
+    return Response.json(
+      { error: "OpenRouter API key not configured on the server." },
+      { status: 500 },
+    );
+  }
+
   try {
     const arrayBuffer = await file.arrayBuffer();
     const pdf = await extractText(new Uint8Array(arrayBuffer));
@@ -35,11 +70,14 @@ export async function POST(request: Request) {
       );
     }
 
-    const ollamaRes = await fetch(`${OLLAMA_BASE_URL}/chat/completions`, {
+    const endpoint = buildEndpoint(provider);
+    const model = resolveModel(provider, modelId);
+
+    const llmRes = await fetch(endpoint, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: buildHeaders(provider),
       body: JSON.stringify({
-        model: OLLAMA_MODEL,
+        model,
         stream: true,
         messages: [
           {
@@ -55,13 +93,14 @@ export async function POST(request: Request) {
       }),
     });
 
-    if (!ollamaRes.ok || !ollamaRes.body) {
-      const text = await ollamaRes.text();
-      return Response.json({ error: `Ollama error: ${text}` }, { status: 502 });
+    if (!llmRes.ok || !llmRes.body) {
+      const text = await llmRes.text();
+      const label = provider === "openrouter" ? "OpenRouter" : "Ollama";
+      return Response.json({ error: `${label} error: ${text}` }, { status: 502 });
     }
 
-    // Transform Ollama's SSE stream into our own JSON-lines stream
-    const reader = ollamaRes.body.getReader();
+    // Transform the SSE stream into our own JSON-lines stream
+    const reader = llmRes.body.getReader();
     const decoder = new TextDecoder();
 
     const stream = new ReadableStream({

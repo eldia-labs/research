@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
+import { ModelSwitcher } from "@/components/model-switcher";
 import { Button } from "@/components/ui/button";
 import {
     PromptInput,
@@ -18,6 +19,7 @@ import {
     PromptInputTextarea,
 } from "@/components/ui/prompt-input";
 import { Separator } from "@/components/ui/separator";
+import { DEFAULT_MODEL, type Model } from "@/lib/models";
 
 export interface Message {
     role: "user" | "assistant";
@@ -36,6 +38,7 @@ interface ChatPanelProps {
 export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggle }: ChatPanelProps) {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
+    const [model, setModel] = useState<Model>(DEFAULT_MODEL);
     const [showReasoning, setShowReasoning] = useState<Record<number, boolean>>(
         {}
     );
@@ -59,6 +62,8 @@ export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggl
         const formData = new FormData();
         formData.append("file", file);
         formData.append("prompt", userMessage.content);
+        formData.append("provider", model.provider);
+        formData.append("model", model.id);
 
         let reasoning = "";
         let content = "";
@@ -254,7 +259,8 @@ export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggl
                             placeholder="Ask a question…"
                             className="text-sm"
                         />
-                        <PromptInputActions className="justify-end pt-2">
+                        <PromptInputActions className="justify-between pt-2">
+                            <ModelSwitcher model={model} onChange={setModel} />
                             <PromptInputAction
                                 tooltip={loading ? "Stop generation" : "Send message"}
                             >
