@@ -102,7 +102,7 @@ export default function Page() {
                 />
             </div>
 
-            <div className="flex xl:hidden h-screen w-screen overflow-hidden flex-col">
+            <div className="flex xl:hidden h-screen w-screen overflow-hidden overscroll-none flex-col">
                 <div className="flex-1 min-h-0">
                     <div className={`h-full ${activeSection === "files" ? "block" : "hidden"}`}>
                         <Sidebar
