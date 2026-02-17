@@ -3,8 +3,10 @@
 import { FileText, Plus } from "lucide-react";
 import { useRef } from "react";
 
+import { ResizeHandle } from "@/components/resize-handle";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { COLLAPSED_WIDTH, DEFAULT_PANEL_WIDTH, useResizablePanel } from "@/hooks/use-resizable-panel";
 
 import type { PaperMetadata } from "@/lib/pdf";
 
@@ -12,14 +14,23 @@ interface SidebarProps {
     files: File[];
     paperMetadata: Record<number, PaperMetadata | null>;
     activeIndex: number | null;
-    collapsed: boolean;
+    width?: number;
+    defaultWidth?: number;
+    onWidthChange?: (width: number) => void;
     onFileAdd: (file: File) => void;
     onFileClick: (index: number) => void;
-    onToggle: () => void;
 }
 
-export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAdd, onFileClick, onToggle }: SidebarProps) {
+export function Sidebar({ files, paperMetadata, activeIndex, width, defaultWidth = DEFAULT_PANEL_WIDTH, onWidthChange, onFileAdd, onFileClick }: SidebarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
+
+    const { handleMouseDown, handleDoubleClick, expand } = useResizablePanel({
+        width,
+        defaultWidth,
+        side: "right",
+        onWidthChange,
+    });
 
     function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
         const selected = e.target.files?.[0];
@@ -31,40 +42,56 @@ export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAd
     }
 
     return (
-        <div className={`relative flex h-full ${collapsed ? "shrink-0" : "flex-1 min-w-0"}`}>
+        <div className="relative flex h-full shrink-0" style={!collapsed && width !== undefined ? { width } : undefined}>
             <aside
-                className={`flex h-full flex-col overflow-hidden transition-[width] duration-200 ease-in-out ${collapsed ? "w-12" : "flex-1"}`}
+                className={`flex h-full flex-col overflow-hidden ${collapsed ? "w-12" : "flex-1 min-w-0"}`}
             >
                 {collapsed ? (
-                    <div className="flex h-full flex-col items-center gap-3 py-3">
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-8 rounded-lg border border-input bg-input/20 dark:bg-input/30"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            <Plus className="size-4" />
-                        </Button>
-                        <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".pdf"
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-                        {files.map((f, i) => (
-                            <button
-                                key={`${f.name}-${f.lastModified}`}
-                                type="button"
-                                onClick={() => onFileClick(i)}
-                                className={`flex items-center justify-center rounded-lg p-1.5 border transition-colors ${i === activeIndex
-                                    ? "border-primary bg-primary/10 text-primary"
-                                    : "border-input bg-input/20 dark:bg-input/30 text-muted-foreground hover:text-primary"
-                                    }`}
+                    <div
+                        className="flex h-full w-full flex-col items-center cursor-pointer"
+                        onClick={expand}
+                    >
+                        <div className="flex h-12 w-full items-center justify-center">
+                            <span className="text-sm font-semibold tracking-tight">
+                                r<span className="text-primary">.</span>
+                            </span>
+                        </div>
+                        <div className="flex flex-col items-center gap-3 pt-4">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="size-8 rounded-lg border border-input bg-input/20 dark:bg-input/30"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    fileInputRef.current?.click();
+                                }}
                             >
-                                <FileText className="size-4 shrink-0" />
-                            </button>
-                        ))}
+                                <Plus className="size-4" />
+                            </Button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".pdf"
+                                className="hidden"
+                                onChange={handleFileChange}
+                            />
+                            {files.map((f, i) => (
+                                <button
+                                    key={`${f.name}-${f.lastModified}`}
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onFileClick(i);
+                                    }}
+                                    className={`flex items-center justify-center rounded-lg p-1.5 border transition-colors ${i === activeIndex
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-input bg-input/20 dark:bg-input/30 text-muted-foreground hover:text-primary"
+                                        }`}
+                                >
+                                    <FileText className="size-4 shrink-0" />
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 ) : (
                     <>
@@ -131,15 +158,13 @@ export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAd
                 )}
             </aside>
 
-            <button
-                type="button"
-                onDoubleClick={onToggle}
-                className="group relative z-10 hidden xl:flex shrink-0 cursor-col-resize items-center justify-center"
-                aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-                <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
-                <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
-            </button>
+            <ResizeHandle
+                side="right"
+                label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                onMouseDown={handleMouseDown}
+                onDoubleClick={handleDoubleClick}
+                className="hidden xl:flex"
+            />
         </div>
     );
 }

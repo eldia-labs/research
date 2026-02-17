@@ -1,20 +1,26 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
-import { ChatPanel, type Message } from "@/components/chat-panel";
+import { Chat, type Message } from "@/components/chat";
 import { PdfViewer } from "@/components/pdf-viewer";
 import { type ActiveSection, SectionNav } from "@/components/section-nav";
 import { Sidebar } from "@/components/sidebar";
 import { extractPdfInfo, type PaperMetadata } from "@/lib/pdf";
+
+const MIN_PDF_WIDTH = 480;
 
 export default function Page() {
     const [files, setFiles] = useState<File[]>([]);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
     const [chatHistories, setChatHistories] = useState<Record<number, Message[]>>({});
     const [paperMetadata, setPaperMetadata] = useState<Record<number, PaperMetadata | null>>({});
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [chatCollapsed, setChatCollapsed] = useState(false);
+    const [sidebarWidth, setSidebarWidth] = useState(320);
+    const [chatWidth, setChatWidth] = useState(320);
+    const sidebarWidthRef = useRef(sidebarWidth);
+    const chatWidthRef = useRef(chatWidth);
+    sidebarWidthRef.current = sidebarWidth;
+    chatWidthRef.current = chatWidth;
     const [activeSection, setActiveSection] = useState<ActiveSection>("pdf");
 
     const activeFile = activeIndex !== null ? files[activeIndex] ?? null : null;
@@ -68,6 +74,22 @@ export default function Page() {
         });
     }
 
+    const handleSidebarWidthChange = useCallback(
+        (newWidth: number) => {
+            const maxWidth = window.innerWidth - chatWidthRef.current - MIN_PDF_WIDTH;
+            setSidebarWidth(Math.min(newWidth, maxWidth));
+        },
+        [],
+    );
+
+    const handleChatWidthChange = useCallback(
+        (newWidth: number) => {
+            const maxWidth = window.innerWidth - sidebarWidthRef.current - MIN_PDF_WIDTH;
+            setChatWidth(Math.min(newWidth, maxWidth));
+        },
+        [],
+    );
+
     const handleMessagesChange = useCallback(
         (messages: Message[]) => {
             if (activeIndex === null) return;
@@ -83,22 +105,24 @@ export default function Page() {
                     files={files}
                     paperMetadata={paperMetadata}
                     activeIndex={activeIndex}
-                    collapsed={sidebarCollapsed}
+                    width={sidebarWidth}
+                    defaultWidth={320}
+                    onWidthChange={handleSidebarWidthChange}
                     onFileAdd={handleAddFile}
                     onFileClick={setActiveIndex}
-                    onToggle={() => setSidebarCollapsed((v) => !v)}
                 />
 
-                <div className="h-full min-w-0 flex-[2]">
+                <div className="h-full min-w-[480px] flex-[2]">
                     <PdfViewer file={activeFile} />
                 </div>
 
-                <ChatPanel
+                <Chat
                     file={activeFile}
                     messages={activeMessages}
                     onMessagesChange={handleMessagesChange}
-                    collapsed={chatCollapsed}
-                    onToggle={() => setChatCollapsed((v) => !v)}
+                    width={chatWidth}
+                    defaultWidth={320}
+                    onWidthChange={handleChatWidthChange}
                 />
             </div>
 
@@ -109,7 +133,6 @@ export default function Page() {
                             files={files}
                             paperMetadata={paperMetadata}
                             activeIndex={activeIndex}
-                            collapsed={false}
                             onFileAdd={(f) => {
                                 handleAddFile(f);
                                 setActiveSection("pdf");
@@ -118,19 +141,16 @@ export default function Page() {
                                 setActiveIndex(i);
                                 setActiveSection("pdf");
                             }}
-                            onToggle={() => { }}
                         />
                     </div>
                     <div className={`h-full ${activeSection === "pdf" ? "block" : "hidden"}`}>
                         <PdfViewer file={activeFile} />
                     </div>
                     <div className={`h-full ${activeSection === "chat" ? "block" : "hidden"}`}>
-                        <ChatPanel
+                        <Chat
                             file={activeFile}
                             messages={activeMessages}
                             onMessagesChange={handleMessagesChange}
-                            collapsed={false}
-                            onToggle={() => { }}
                         />
                     </div>
                 </div>

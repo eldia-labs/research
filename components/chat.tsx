@@ -11,6 +11,7 @@ import {
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
 import { ModelSwitcher } from "@/components/model-switcher";
+import { ResizeHandle } from "@/components/resize-handle";
 import { Button } from "@/components/ui/button";
 import {
     PromptInput,
@@ -19,6 +20,7 @@ import {
     PromptInputTextarea,
 } from "@/components/ui/prompt-input";
 import { Separator } from "@/components/ui/separator";
+import { COLLAPSED_WIDTH, DEFAULT_PANEL_WIDTH, useResizablePanel } from "@/hooks/use-resizable-panel";
 import { DEFAULT_MODEL, type Model } from "@/lib/models";
 
 export interface Message {
@@ -27,15 +29,16 @@ export interface Message {
     reasoning?: string;
 }
 
-interface ChatPanelProps {
+interface ChatProps {
     file: File | null;
     messages: Message[];
     onMessagesChange: (messages: Message[]) => void;
-    collapsed: boolean;
-    onToggle: () => void;
+    width?: number;
+    defaultWidth?: number;
+    onWidthChange?: (width: number) => void;
 }
 
-export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggle }: ChatPanelProps) {
+export function Chat({ file, messages, onMessagesChange, width, defaultWidth = DEFAULT_PANEL_WIDTH, onWidthChange }: ChatProps) {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState<Model>(DEFAULT_MODEL);
@@ -43,6 +46,14 @@ export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggl
         {}
     );
     const scrollRef = useRef<HTMLDivElement>(null);
+    const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
+
+    const { handleMouseDown, handleDoubleClick, expand } = useResizablePanel({
+        width,
+        defaultWidth,
+        side: "left",
+        onWidthChange,
+    });
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -159,33 +170,36 @@ export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggl
     if (collapsed) {
         return (
             <div className="relative flex h-full shrink-0">
-                <button
-                    type="button"
-                    onDoubleClick={onToggle}
-                    className="group relative z-10 flex shrink-0 cursor-col-resize items-center justify-center"
-                    aria-label="Expand chat"
+                <ResizeHandle
+                    side="left"
+                    label="Expand chat"
+                    onMouseDown={handleMouseDown}
+                    onDoubleClick={handleDoubleClick}
+                    className="flex"
+                />
+                <div
+                    className="flex h-full w-12 flex-col items-center cursor-pointer"
+                    onClick={expand}
                 >
-                    <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
-                    <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
-                </button>
-                <div className="flex h-full w-12 items-start justify-center pt-5">
-                    <MessageSquare className="text-muted-foreground size-4" />
+                    <div
+                        className="flex h-12 w-full items-center justify-center"
+                    >
+                        <MessageSquare className="text-muted-foreground size-4" />
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="relative flex h-full flex-1 min-w-0 pb-20 xl:pb-0">
-            <button
-                type="button"
-                onDoubleClick={onToggle}
-                className="group relative z-10 hidden xl:flex shrink-0 cursor-col-resize items-center justify-center"
-                aria-label="Collapse chat"
-            >
-                <div className="h-full w-px bg-border group-hover:bg-primary group-hover:shadow-[0_0_0_1.5px_var(--color-primary)] transition-all" />
-                <div className="absolute inset-y-0 -left-1.5 -right-1.5" />
-            </button>
+        <div className="relative flex h-full shrink-0 pb-20 xl:pb-0" style={width !== undefined ? { width } : undefined}>
+            <ResizeHandle
+                side="left"
+                label="Collapse chat"
+                onMouseDown={handleMouseDown}
+                onDoubleClick={handleDoubleClick}
+                className="hidden xl:flex"
+            />
 
             <div className="flex h-full flex-1 min-w-0 flex-col overflow-hidden">
                 <div className="flex h-12 items-center border-b border-border px-4 shrink-0">
