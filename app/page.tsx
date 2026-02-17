@@ -78,7 +78,7 @@ export default function Page() {
 
     return (
         <>
-            <div className="hidden xl:flex h-screen w-screen overflow-hidden">
+            <div className="hidden xl:flex h-screen w-screen overflow-hidden overscroll-none">
                 <Sidebar
                     files={files}
                     paperMetadata={paperMetadata}
