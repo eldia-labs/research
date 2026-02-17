@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, ChevronDown, Loader2, Search } from "lucide-react";
+import { ChevronDown, Loader2, Search } from "lucide-react";
 import { Popover as PopoverPrimitive } from "radix-ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -70,7 +70,7 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                         open && "bg-muted text-foreground"
                     )}
                 >
-                    <span className="max-w-[120px] truncate">{model.name}</span>
+                    <span className="truncate">{model.name}</span>
                     <ChevronDown
                         className={cn(
                             "size-3 transition-transform duration-150",
@@ -85,12 +85,17 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                     side="top"
                     align="start"
                     sideOffset={8}
+                    avoidCollisions={false}
                     className={cn(
-                        "z-50 w-64 rounded-lg border border-border bg-popover p-1 shadow-lg",
+                        "z-50 rounded-lg border border-border bg-popover p-1 shadow-lg",
+                        "w-[calc(var(--radix-popover-trigger-width)+var(--radix-popover-trigger-x,0px))] max-w-[calc(100vw-1.5rem)]",
                         "data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=open]:slide-in-from-bottom-2",
                         "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:slide-in-from-bottom-2",
                         "origin-[--radix-popover-content-transform-origin]"
                     )}
+                    style={{
+                        width: "calc(var(--radix-popover-content-available-width) - 1.25rem - 1px)",
+                    }}
                 >
                     <div className="p-1.5 pb-0">
                         <div className="relative">
@@ -112,7 +117,7 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                             <span className="text-xs text-muted-foreground">Loading models…</span>
                         </div>
                     ) : (
-                        <div className="max-h-72 overflow-y-auto p-1">
+                        <div className="max-h-[40vh] overflow-y-auto p-1">
                             {filtered.length === 0 && (
                                 <p className="py-4 text-center text-xs text-muted-foreground">
                                     No models found
@@ -130,8 +135,9 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                                         }}
                                         className={cn(
                                             "flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm transition-colors",
-                                            "hover:bg-muted",
-                                            isSelected && "bg-muted"
+                                            isSelected
+                                                ? "bg-primary text-primary-foreground"
+                                                : "hover:bg-muted"
                                         )}
                                     >
                                         <div className="flex-1 min-w-0">
@@ -140,7 +146,7 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                                                     className={cn(
                                                         "font-medium truncate text-xs",
                                                         isSelected
-                                                            ? "text-foreground"
+                                                            ? "text-primary-foreground"
                                                             : "text-foreground/80"
                                                     )}
                                                 >
@@ -148,14 +154,16 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                                                 </span>
                                             </div>
                                             {m.description && (
-                                                <p className="text-[0.65rem] text-muted-foreground truncate">
+                                                <p className={cn(
+                                                    "text-[0.65rem] truncate",
+                                                    isSelected
+                                                        ? "text-primary-foreground/70"
+                                                        : "text-muted-foreground"
+                                                )}>
                                                     {m.description}
                                                 </p>
                                             )}
                                         </div>
-                                        {isSelected && (
-                                            <Check className="size-3.5 shrink-0 text-primary" />
-                                        )}
                                     </button>
                                 );
                             })}
