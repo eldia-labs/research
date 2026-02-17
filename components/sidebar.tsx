@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 
 import type { PaperMetadata } from "@/lib/pdf";
 
@@ -105,20 +106,26 @@ export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAd
                                         key={`${f.name}-${f.lastModified}`}
                                         type="button"
                                         onClick={() => onFileClick(i)}
-                                        className={`flex w-full gap-2 rounded-lg px-2.5 text-xs font-medium shadow-xs transition-all ${isActive
-                                            ? "bg-primary text-primary-foreground py-2"
-                                            : "h-8 items-center text-muted-foreground hover:bg-muted hover:text-foreground"
+                                        className={`flex w-full gap-2 rounded-lg px-2.5 text-xs font-medium shadow-xs transition-all py-2 ${isActive
+                                            ? "bg-primary text-primary-foreground"
+                                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                             }`}
                                     >
-                                        <FileText className={`size-4 shrink-0 ${isActive ? "mt-0.5" : ""}`} />
-                                        {isActive && meta ? (
+                                        <FileText className="size-4 shrink-0 mt-0.5" />
+                                        {meta === undefined ? (
+                                            <div className="min-w-0 flex-1 text-left leading-relaxed">
+                                                <div className="flex items-center h-[1lh]"><Skeleton className={`h-[0.65em] w-full ${isActive ? "bg-primary-foreground/20" : "bg-muted-foreground/15"}`} /></div>
+                                                <div className="flex items-center h-[1lh]"><Skeleton className={`h-[0.65em] w-full ${isActive ? "bg-primary-foreground/20" : "bg-muted-foreground/15"}`} /></div>
+                                                <div className="flex items-center h-[1lh]"><Skeleton className={`h-[0.65em] w-1/2 ${isActive ? "bg-primary-foreground/20" : "bg-muted-foreground/15"}`} /></div>
+                                            </div>
+                                        ) : meta ? (
                                             <div className="min-w-0 text-left leading-relaxed">
                                                 <p className="truncate font-semibold">{meta.title ?? f.name}</p>
-                                                <p className="truncate opacity-80">{meta.authors?.join(", ") || "Unknown authors"}</p>
-                                                <p className="truncate opacity-60">{meta.year ?? "Unknown year"}{meta.journal ? ` · ${meta.journal}` : ""}</p>
+                                                <p className={`truncate ${isActive ? "opacity-80" : "opacity-60"}`}>{meta.authors?.join(", ") || "Unknown authors"}</p>
+                                                <p className={`truncate ${isActive ? "opacity-60" : "opacity-40"}`}>{meta.year ?? "Unknown year"}{meta.journal ? ` · ${meta.journal}` : ""}</p>
                                             </div>
                                         ) : (
-                                            <span className="truncate leading-none">{meta?.title ?? f.name}</span>
+                                            <span className="truncate leading-none">{f.name}</span>
                                         )}
                                     </button>
                                 );
