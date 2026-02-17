@@ -111,7 +111,6 @@ export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAd
                                             : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                             }`}
                                     >
-                                        <FileText className="size-4 shrink-0 mt-0.5" />
                                         {meta === undefined ? (
                                             <div className="min-w-0 flex-1 text-left leading-relaxed">
                                                 <div className="flex items-center h-[1lh]"><Skeleton className={`h-[0.65em] w-full ${isActive ? "bg-primary-foreground/20" : "bg-muted-foreground/15"}`} /></div>
