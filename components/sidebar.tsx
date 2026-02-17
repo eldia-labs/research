@@ -4,7 +4,6 @@ import { FileText, Plus } from "lucide-react";
 import { useRef } from "react";
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { PaperMetadata } from "@/lib/pdf";
@@ -69,13 +68,11 @@ export function Sidebar({ files, paperMetadata, activeIndex, collapsed, onFileAd
                     </div>
                 ) : (
                     <>
-                        <div className="flex items-center justify-center px-4 py-5">
+                        <div className="flex h-12 items-center justify-center border-b border-border px-4">
                             <h1 className="text-base font-semibold tracking-tight whitespace-nowrap">
                                 research<span className="text-primary">.</span>
                             </h1>
                         </div>
-
-                        <Separator />
 
                         <div className="px-3 pt-4 pb-2">
                             <Button

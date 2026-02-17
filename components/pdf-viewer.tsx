@@ -160,7 +160,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
 
     return (
         <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
-            <div className="relative flex items-center border-b border-border px-3 py-2">
+            <div className="relative flex h-12 items-center border-b border-border px-3">
                 <div className="flex flex-1 items-center justify-center gap-2">
                     <Button
                         type="button"

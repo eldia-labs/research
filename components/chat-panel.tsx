@@ -183,11 +183,9 @@ export function ChatPanel({ file, messages, onMessagesChange, collapsed, onToggl
             </button>
 
             <div className="flex h-full flex-1 min-w-0 flex-col overflow-hidden">
-                <div className="px-4 py-5 shrink-0">
+                <div className="flex h-12 items-center border-b border-border px-4 shrink-0">
                     <h2 className="text-sm font-semibold">Chat</h2>
                 </div>
-
-                <Separator />
 
                 <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-2">
                     {messages.map((msg, i) => (
