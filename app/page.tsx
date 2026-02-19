@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Chat, type Message } from "@/components/chat";
 import { PdfViewer } from "@/components/pdf-viewer";
@@ -13,23 +13,41 @@ const MIN_PDF_WIDTH = 480;
 export default function Page() {
     const [files, setFiles] = useState<File[]>([]);
     const [activeIndex, setActiveIndex] = useState<number | null>(null);
-    const [chatHistories, setChatHistories] = useState<Record<number, Message[]>>({});
     const [paperMetadata, setPaperMetadata] = useState<Record<number, PaperMetadata | null>>({});
+    const [chatHistories, setChatHistories] = useState<Record<number, Message[]>>({});
+
+    const [activeSection, setActiveSection] = useState<ActiveSection>("pdf");
+    const [textSelection, setTextSelection] = useState<string | null>(null);
     const [sidebarWidth, setSidebarWidth] = useState(320);
     const [chatWidth, setChatWidth] = useState(320);
-    const sidebarWidthRef = useRef(sidebarWidth);
-    const chatWidthRef = useRef(chatWidth);
-    sidebarWidthRef.current = sidebarWidth;
-    chatWidthRef.current = chatWidth;
-    const [activeSection, setActiveSection] = useState<ActiveSection>("pdf");
-    const [pdfSelection, setPdfSelection] = useState<string | null>(null);
 
     const activeFile = activeIndex !== null ? files[activeIndex] ?? null : null;
     const activeMessages = activeIndex !== null ? chatHistories[activeIndex] ?? [] : [];
 
-    useEffect(() => {
-        console.log(paperMetadata)
-    }, [paperMetadata]);
+    async function fetchMetadata(file: File, index: number) {
+        try {
+            const { doi, arxivId, firstPageText } = await extractPdfInfo(file);
+            const params = new URLSearchParams();
+            if (doi) params.set("doi", doi);
+            if (arxivId) params.set("arxiv", arxivId);
+            if (firstPageText.trim()) params.set("query", firstPageText);
+
+            if (!params.size) {
+                setPaperMetadata((prev) => ({ ...prev, [index]: null }));
+                return;
+            }
+
+            const res = await fetch(`/api/metadata?${params.toString()}`);
+            if (res.ok) {
+                const metadata: PaperMetadata = await res.json();
+                setPaperMetadata((prev) => ({ ...prev, [index]: metadata }));
+            } else {
+                setPaperMetadata((prev) => ({ ...prev, [index]: null }));
+            }
+        } catch {
+            setPaperMetadata((prev) => ({ ...prev, [index]: null }));
+        }
+    }
 
     function handleAddFile(file: File) {
         const existingIndex = files.findIndex(
@@ -47,48 +65,23 @@ export default function Page() {
         const index = files.length;
         setFiles((prev) => [...prev, file]);
         setActiveIndex(index);
-
-        // Extract DOI / arXiv ID → fetch metadata
-        extractPdfInfo(file).then(async ({ doi, arxivId, firstPageText }) => {
-
-            try {
-                const params = new URLSearchParams();
-                if (doi) params.set("doi", doi);
-                if (arxivId) params.set("arxiv", arxivId);
-                if (firstPageText.trim()) params.set("query", firstPageText);
-
-                if (!params.size) {
-                    setPaperMetadata((prev) => ({ ...prev, [index]: null }));
-                    return;
-                }
-
-                const res = await fetch(`/api/metadata?${params.toString()}`);
-                if (res.ok) {
-                    const metadata: PaperMetadata = await res.json();
-                    setPaperMetadata((prev) => ({ ...prev, [index]: metadata }));
-                } else {
-                    setPaperMetadata((prev) => ({ ...prev, [index]: null }));
-                }
-            } catch {
-                setPaperMetadata((prev) => ({ ...prev, [index]: null }));
-            }
-        });
+        fetchMetadata(file, index);
     }
 
     const handleSidebarWidthChange = useCallback(
         (newWidth: number) => {
-            const maxWidth = window.innerWidth - chatWidthRef.current - MIN_PDF_WIDTH;
+            const maxWidth = window.innerWidth - chatWidth - MIN_PDF_WIDTH;
             setSidebarWidth(Math.min(newWidth, maxWidth));
         },
-        [],
+        [chatWidth],
     );
 
     const handleChatWidthChange = useCallback(
         (newWidth: number) => {
-            const maxWidth = window.innerWidth - sidebarWidthRef.current - MIN_PDF_WIDTH;
+            const maxWidth = window.innerWidth - sidebarWidth - MIN_PDF_WIDTH;
             setChatWidth(Math.min(newWidth, maxWidth));
         },
-        [],
+        [sidebarWidth],
     );
 
     const handleMessagesChange = useCallback(
@@ -99,13 +92,13 @@ export default function Page() {
         [activeIndex],
     );
 
-    const handlePdfSelection = useCallback((selection: string) => {
-        setPdfSelection(selection);
+    const handleTextSelection = useCallback((selection: string) => {
+        setTextSelection(selection);
         setActiveSection("chat");
     }, []);
 
     const handleClearSelection = useCallback(() => {
-        setPdfSelection(null);
+        setTextSelection(null);
     }, []);
 
     return (
@@ -116,24 +109,22 @@ export default function Page() {
                     paperMetadata={paperMetadata}
                     activeIndex={activeIndex}
                     width={sidebarWidth}
-                    defaultWidth={320}
                     onWidthChange={handleSidebarWidthChange}
                     onFileAdd={handleAddFile}
                     onFileClick={setActiveIndex}
                 />
 
                 <div className="h-full min-w-[480px] flex-[2]">
-                    <PdfViewer file={activeFile} onSelection={handlePdfSelection} />
+                    <PdfViewer file={activeFile} onSelection={handleTextSelection} />
                 </div>
 
                 <Chat
                     file={activeFile}
                     messages={activeMessages}
-                    onMessagesChange={handleMessagesChange}
+                    selection={textSelection}
                     width={chatWidth}
-                    defaultWidth={320}
+                    onMessagesChange={handleMessagesChange}
                     onWidthChange={handleChatWidthChange}
-                    selection={pdfSelection}
                     onClearSelection={handleClearSelection}
                 />
             </div>
@@ -156,14 +147,14 @@ export default function Page() {
                         />
                     </div>
                     <div className={`h-full ${activeSection === "pdf" ? "block" : "hidden"}`}>
-                        <PdfViewer file={activeFile} onSelection={handlePdfSelection} />
+                        <PdfViewer file={activeFile} onSelection={handleTextSelection} />
                     </div>
                     <div className={`h-full ${activeSection === "chat" ? "block" : "hidden"}`}>
                         <Chat
                             file={activeFile}
                             messages={activeMessages}
+                            selection={textSelection}
                             onMessagesChange={handleMessagesChange}
-                            selection={pdfSelection}
                             onClearSelection={handleClearSelection}
                         />
                     </div>

@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { ResizeHandle } from "@/components/resize-handle";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { COLLAPSED_WIDTH, DEFAULT_PANEL_WIDTH, useResizablePanel } from "@/hooks/use-resizable-panel";
+import { COLLAPSED_WIDTH, useResizablePanel } from "@/hooks/use-resizable-panel";
 
 import type { PaperMetadata } from "@/lib/pdf";
 
@@ -15,19 +15,17 @@ interface SidebarProps {
     paperMetadata: Record<number, PaperMetadata | null>;
     activeIndex: number | null;
     width?: number;
-    defaultWidth?: number;
     onWidthChange?: (width: number) => void;
     onFileAdd: (file: File) => void;
     onFileClick: (index: number) => void;
 }
 
-export function Sidebar({ files, paperMetadata, activeIndex, width, defaultWidth = DEFAULT_PANEL_WIDTH, onWidthChange, onFileAdd, onFileClick }: SidebarProps) {
+export function Sidebar({ files, paperMetadata, activeIndex, width, onWidthChange, onFileAdd, onFileClick }: SidebarProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
 
     const { handleMouseDown, handleDoubleClick, expand } = useResizablePanel({
         width,
-        defaultWidth,
         side: "right",
         onWidthChange,
     });
@@ -161,9 +159,9 @@ export function Sidebar({ files, paperMetadata, activeIndex, width, defaultWidth
             <ResizeHandle
                 side="right"
                 label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                className="hidden xl:flex"
                 onMouseDown={handleMouseDown}
                 onDoubleClick={handleDoubleClick}
-                className="hidden xl:flex"
             />
         </div>
     );

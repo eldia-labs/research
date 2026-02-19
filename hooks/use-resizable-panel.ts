@@ -8,14 +8,12 @@ export const DEFAULT_PANEL_WIDTH = 320;
 
 interface UseResizablePanelOptions {
     width?: number;
-    defaultWidth?: number;
     side: "left" | "right";
     onWidthChange?: (width: number) => void;
 }
 
 export function useResizablePanel({
     width,
-    defaultWidth = DEFAULT_PANEL_WIDTH,
     side,
     onWidthChange,
 }: UseResizablePanelOptions) {
@@ -26,7 +24,7 @@ export function useResizablePanel({
             if (!onWidthChange) return;
             e.preventDefault();
             const startX = e.clientX;
-            const startW = collapsed ? COLLAPSED_WIDTH : (width ?? defaultWidth);
+            const startW = collapsed ? COLLAPSED_WIDTH : (width ?? DEFAULT_PANEL_WIDTH);
 
             const onMouseMove = (ev: MouseEvent) => {
                 const delta = ev.clientX - startX;
@@ -50,16 +48,16 @@ export function useResizablePanel({
             document.body.style.cursor = "col-resize";
             document.body.style.userSelect = "none";
         },
-        [collapsed, width, defaultWidth, side, onWidthChange],
+        [collapsed, width, side, onWidthChange],
     );
 
     const handleDoubleClick = useCallback(() => {
-        onWidthChange?.(defaultWidth);
-    }, [defaultWidth, onWidthChange]);
+        onWidthChange?.(DEFAULT_PANEL_WIDTH);
+    }, [onWidthChange]);
 
     const expand = useCallback(() => {
-        onWidthChange?.(defaultWidth);
-    }, [defaultWidth, onWidthChange]);
+        onWidthChange?.(DEFAULT_PANEL_WIDTH);
+    }, [onWidthChange]);
 
     return { handleMouseDown, handleDoubleClick, expand };
 }

@@ -10,7 +10,7 @@ import {
     Square,
     X,
 } from "lucide-react";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ModelSwitcher } from "@/components/model-switcher";
 import { ResizeHandle } from "@/components/resize-handle";
@@ -22,7 +22,7 @@ import {
     PromptInputTextarea,
 } from "@/components/ui/prompt-input";
 import { Separator } from "@/components/ui/separator";
-import { COLLAPSED_WIDTH, DEFAULT_PANEL_WIDTH, useResizablePanel } from "@/hooks/use-resizable-panel";
+import { COLLAPSED_WIDTH, useResizablePanel } from "@/hooks/use-resizable-panel";
 import { DEFAULT_MODEL, type Model } from "@/lib/models";
 
 export interface Message {
@@ -35,27 +35,26 @@ export interface Message {
 interface ChatProps {
     file: File | null;
     messages: Message[];
-    onMessagesChange: (messages: Message[]) => void;
-    width?: number;
-    defaultWidth?: number;
-    onWidthChange?: (width: number) => void;
     selection?: string | null;
+    width?: number;
+    onMessagesChange: (messages: Message[]) => void;
+    onWidthChange?: (width: number) => void;
     onClearSelection?: () => void;
 }
 
-export function Chat({ file, messages, onMessagesChange, width, defaultWidth = DEFAULT_PANEL_WIDTH, onWidthChange, selection, onClearSelection }: ChatProps) {
+export function Chat({ file, messages, selection, width, onMessagesChange, onWidthChange, onClearSelection }: ChatProps) {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState<Model>(DEFAULT_MODEL);
-    const [showReasoning, setShowReasoning] = useState<Record<number, boolean>>(
-        {}
-    );
+
+    const [showReasoning, setShowReasoning] = useState<Record<number, boolean>>({});
     const scrollRef = useRef<HTMLDivElement>(null);
+    const abortRef = useRef<AbortController | null>(null);
+
     const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
 
     const { handleMouseDown, handleDoubleClick, expand } = useResizablePanel({
         width,
-        defaultWidth,
         side: "left",
         onWidthChange,
     });
@@ -66,8 +65,7 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
         }
     }, [messages, loading]);
 
-    async function handleSubmit(e: FormEvent) {
-        e.preventDefault();
+    async function handleSubmit() {
         if (!file || !input.trim()) return;
 
         // Build the user prompt with selection context
@@ -104,10 +102,14 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
         let reasoning = "";
         let content = "";
 
+        const controller = new AbortController();
+        abortRef.current = controller;
+
         try {
             const res = await fetch("/api/summarize", {
                 method: "POST",
                 body: formData,
+                signal: controller.signal,
             });
 
             if (!res.ok) {
@@ -177,15 +179,21 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
                     },
                 ]);
             }
-        } catch {
+        } catch (err) {
+            if ((err as Error).name === "AbortError") return;
             onMessagesChange([
                 ...messages,
                 userMessage,
                 { role: "assistant", content: "Failed to connect to the server." },
             ]);
         } finally {
+            abortRef.current = null;
             setLoading(false);
         }
+    }
+
+    function handleStop() {
+        abortRef.current?.abort();
     }
 
     function toggleReasoning(index: number) {
@@ -198,9 +206,9 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
                 <ResizeHandle
                     side="left"
                     label="Expand chat"
+                    className="flex"
                     onMouseDown={handleMouseDown}
                     onDoubleClick={handleDoubleClick}
-                    className="flex"
                 />
                 <div
                     className="flex h-full w-12 flex-col items-center cursor-pointer"
@@ -221,9 +229,9 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
             <ResizeHandle
                 side="left"
                 label="Collapse chat"
+                className="hidden xl:flex"
                 onMouseDown={handleMouseDown}
                 onDoubleClick={handleDoubleClick}
-                className="hidden xl:flex"
             />
 
             <div className="flex h-full flex-1 min-w-0 flex-col overflow-hidden">
@@ -321,7 +329,7 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
                         value={input}
                         onValueChange={setInput}
                         isLoading={loading}
-                        onSubmit={() => handleSubmit({ preventDefault: () => { } } as FormEvent)}
+                        onSubmit={handleSubmit}
                         disabled={!file}
                         maxHeight={120}
                     >
@@ -334,19 +342,26 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
                             <PromptInputAction
                                 tooltip={loading ? "Stop generation" : "Send message"}
                             >
-                                <Button
-                                    variant="default"
-                                    size="icon"
-                                    className="h-8 w-8 rounded-lg"
-                                    disabled={!file || loading || !input.trim()}
-                                    onClick={() => handleSubmit({ preventDefault: () => { } } as FormEvent)}
-                                >
-                                    {loading ? (
+                                {loading ? (
+                                    <Button
+                                        variant="default"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-lg"
+                                        onClick={handleStop}
+                                    >
                                         <Square className="size-4 fill-current" />
-                                    ) : (
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="default"
+                                        size="icon"
+                                        className="h-8 w-8 rounded-lg"
+                                        disabled={!file || !input.trim()}
+                                        onClick={handleSubmit}
+                                    >
                                         <ArrowUp className="size-4" />
-                                    )}
-                                </Button>
+                                    </Button>
+                                )}
                             </PromptInputAction>
                         </PromptInputActions>
                     </PromptInput>

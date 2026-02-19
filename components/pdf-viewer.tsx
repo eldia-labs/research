@@ -32,10 +32,12 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
     const [fileUrl, setFileUrl] = useState<string | null>(null);
     const [numPages, setNumPages] = useState(0);
     const [pageNumber, setPageNumber] = useState(1);
+
     const [zoom, setZoom] = useState(100);
     const [fitWidth, setFitWidth] = useState(false);
     const [viewerWidth, setViewerWidth] = useState(0);
     const [viewerHeight, setViewerHeight] = useState(0);
+
     const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
     useEffect(() => {
@@ -61,18 +63,13 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
 
         function handleMouseUp() {
             const sel = window.getSelection();
-            if (!sel || sel.isCollapsed || !container) {
-                onSelection?.("");
-                return;
-            }
+            if (!sel || sel.isCollapsed || !container) return;
 
             const anchorNode = sel.anchorNode;
-            if (!anchorNode || !container.contains(anchorNode)) {
-                return;
-            }
+            if (!anchorNode || !container.contains(anchorNode)) return;
 
             const text = sel.toString().trim();
-            onSelection?.(text || "");
+            if (text) onSelection?.(text);
         }
 
         container.addEventListener("mouseup", handleMouseUp);

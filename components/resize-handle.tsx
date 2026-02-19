@@ -3,12 +3,12 @@
 interface ResizeHandleProps {
     side: "left" | "right";
     label: string;
+    className?: string;
     onMouseDown: (e: React.MouseEvent) => void;
     onDoubleClick: () => void;
-    className?: string;
 }
 
-export function ResizeHandle({ side, label, onMouseDown, onDoubleClick, className = "" }: ResizeHandleProps) {
+export function ResizeHandle({ side, label, className = "", onMouseDown, onDoubleClick }: ResizeHandleProps) {
     return (
         <button
             type="button"

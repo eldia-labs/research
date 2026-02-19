@@ -2,7 +2,7 @@
 
 import { ChevronDown, Loader2, Search } from "lucide-react";
 import { Popover as PopoverPrimitive } from "radix-ui";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { OLLAMA_GROUP, type Model } from "@/lib/models";
 import { cn } from "@/lib/utils";
@@ -13,41 +13,35 @@ interface ModelSwitcherProps {
 }
 
 export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
-    const [open, setOpen] = useState(false);
     const [models, setModels] = useState<Model[]>(OLLAMA_GROUP.models);
-    const [fetching, setFetching] = useState(false);
-    const [fetched, setFetched] = useState(false);
+    const [fetchStatus, setFetchStatus] = useState<"idle" | "loading" | "done">("idle");
+
+    const [open, setOpen] = useState(false);
     const [search, setSearch] = useState("");
     const searchRef = useRef<HTMLInputElement>(null);
 
-    const fetchModels = useCallback(async () => {
-        if (fetched || fetching) return;
-        setFetching(true);
-        try {
-            const res = await fetch("/api/models");
-            if (res.ok) {
-                const data: Model[] = await res.json();
-                setModels(data);
-            }
-        } catch {
-            // keep existing models (Ollama fallback)
-        } finally {
-            setFetching(false);
-            setFetched(true);
-        }
-    }, [fetched, fetching]);
-
     // Fetch models on first open
     useEffect(() => {
-        if (open && !fetched) {
-            fetchModels();
-        }
-        if (open) {
-            setSearch("");
-            // Focus the search input after open animation
-            setTimeout(() => searchRef.current?.focus(), 50);
-        }
-    }, [open, fetched, fetchModels]);
+        if (!open || fetchStatus !== "idle") return;
+
+        setFetchStatus("loading");
+        fetch("/api/models")
+            .then(async (res) => {
+                if (res.ok) {
+                    const data: Model[] = await res.json();
+                    setModels(data);
+                }
+            })
+            .catch(() => {
+                // keep existing models (Ollama fallback)
+            })
+            .finally(() => setFetchStatus("done"));
+    }, [open, fetchStatus]);
+
+    // Reset search when popover opens
+    useEffect(() => {
+        if (open) setSearch("");
+    }, [open]);
 
     const filtered = useMemo(() => {
         if (!search.trim()) return models;
@@ -86,6 +80,10 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                     align="start"
                     sideOffset={8}
                     avoidCollisions={false}
+                    onOpenAutoFocus={(e) => {
+                        e.preventDefault();
+                        searchRef.current?.focus();
+                    }}
                     className={cn(
                         "z-50 rounded-lg border border-border bg-popover p-1 shadow-lg",
                         "w-[calc(var(--radix-popover-trigger-width)+var(--radix-popover-trigger-x,0px))] max-w-[calc(100vw-1.5rem)]",
@@ -111,7 +109,7 @@ export function ModelSwitcher({ model, onChange }: ModelSwitcherProps) {
                         </div>
                     </div>
 
-                    {fetching ? (
+                    {fetchStatus === "loading" ? (
                         <div className="flex items-center justify-center gap-2 py-6">
                             <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
                             <span className="text-xs text-muted-foreground">Loading models…</span>
