@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Chat, type Message } from "@/components/chat";
 import { PdfViewer } from "@/components/pdf-viewer";
-import { type ActiveSection, SectionNav } from "@/components/section-nav";
+import { SectionNav, type ActiveSection } from "@/components/section-nav";
 import { Sidebar } from "@/components/sidebar";
 import { extractPdfInfo, type PaperMetadata } from "@/lib/pdf";
 
@@ -22,6 +22,7 @@ export default function Page() {
     sidebarWidthRef.current = sidebarWidth;
     chatWidthRef.current = chatWidth;
     const [activeSection, setActiveSection] = useState<ActiveSection>("pdf");
+    const [pdfSelection, setPdfSelection] = useState<string | null>(null);
 
     const activeFile = activeIndex !== null ? files[activeIndex] ?? null : null;
     const activeMessages = activeIndex !== null ? chatHistories[activeIndex] ?? [] : [];
@@ -98,6 +99,15 @@ export default function Page() {
         [activeIndex],
     );
 
+    const handlePdfSelection = useCallback((selection: string) => {
+        setPdfSelection(selection);
+        setActiveSection("chat");
+    }, []);
+
+    const handleClearSelection = useCallback(() => {
+        setPdfSelection(null);
+    }, []);
+
     return (
         <>
             <div className="hidden xl:flex h-screen w-screen overflow-hidden overscroll-none">
@@ -113,7 +123,7 @@ export default function Page() {
                 />
 
                 <div className="h-full min-w-[480px] flex-[2]">
-                    <PdfViewer file={activeFile} />
+                    <PdfViewer file={activeFile} onSelection={handlePdfSelection} />
                 </div>
 
                 <Chat
@@ -123,6 +133,8 @@ export default function Page() {
                     width={chatWidth}
                     defaultWidth={320}
                     onWidthChange={handleChatWidthChange}
+                    selection={pdfSelection}
+                    onClearSelection={handleClearSelection}
                 />
             </div>
 
@@ -144,13 +156,15 @@ export default function Page() {
                         />
                     </div>
                     <div className={`h-full ${activeSection === "pdf" ? "block" : "hidden"}`}>
-                        <PdfViewer file={activeFile} />
+                        <PdfViewer file={activeFile} onSelection={handlePdfSelection} />
                     </div>
                     <div className={`h-full ${activeSection === "chat" ? "block" : "hidden"}`}>
                         <Chat
                             file={activeFile}
                             messages={activeMessages}
                             onMessagesChange={handleMessagesChange}
+                            selection={pdfSelection}
+                            onClearSelection={handleClearSelection}
                         />
                     </div>
                 </div>

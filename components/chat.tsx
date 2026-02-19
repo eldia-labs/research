@@ -6,7 +6,9 @@ import {
     ChevronUp,
     Loader2,
     MessageSquare,
+    Quote,
     Square,
+    X,
 } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 
@@ -27,6 +29,7 @@ export interface Message {
     role: "user" | "assistant";
     content: string;
     reasoning?: string;
+    quotedText?: string;
 }
 
 interface ChatProps {
@@ -36,9 +39,11 @@ interface ChatProps {
     width?: number;
     defaultWidth?: number;
     onWidthChange?: (width: number) => void;
+    selection?: string | null;
+    onClearSelection?: () => void;
 }
 
-export function Chat({ file, messages, onMessagesChange, width, defaultWidth = DEFAULT_PANEL_WIDTH, onWidthChange }: ChatProps) {
+export function Chat({ file, messages, onMessagesChange, width, defaultWidth = DEFAULT_PANEL_WIDTH, onWidthChange, selection, onClearSelection }: ChatProps) {
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [model, setModel] = useState<Model>(DEFAULT_MODEL);
@@ -65,14 +70,25 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
         e.preventDefault();
         if (!file || !input.trim()) return;
 
-        const userMessage: Message = { role: "user", content: input.trim() };
+        // Build the user prompt with selection context
+        let promptText = input.trim();
+        if (selection) {
+            promptText = `Regarding this selected text from the paper:\n\n"${selection}"\n\n${promptText}`;
+        }
+
+        const userMessage: Message = {
+            role: "user",
+            content: input.trim(),
+            quotedText: selection || undefined,
+        };
         onMessagesChange([...messages, userMessage]);
         setInput("");
+        onClearSelection?.();
         setLoading(true);
 
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("prompt", userMessage.content);
+        formData.append("prompt", promptText);
         formData.append("provider", model.provider);
         formData.append("model", model.id);
         // Send conversation history so the model has context of previous turns
@@ -220,8 +236,19 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
                         <div key={i} className="space-y-1">
                             {msg.role === "user" ? (
                                 <div className="flex justify-end">
-                                    <div className="bg-primary text-primary-foreground max-w-[85%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words">
-                                        {msg.content}
+                                    <div className="max-w-[85%] space-y-1">
+                                        {msg.quotedText && (
+                                            <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary-foreground/70">
+                                                <div className="flex items-start gap-1.5">
+                                                    <Quote className="mt-0.5 size-3 shrink-0 rotate-180 opacity-60" />
+                                                    <p className="line-clamp-4 whitespace-pre-wrap italic">{msg.quotedText}</p>
+                                                    <Quote className="mt-0.5 size-3 shrink-0 self-end opacity-60" />
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div className="bg-primary text-primary-foreground rounded-lg px-3 py-2 text-sm whitespace-pre-wrap break-words">
+                                            {msg.content}
+                                        </div>
                                     </div>
                                 </div>
                             ) : (
@@ -270,6 +297,26 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
                 <Separator />
 
                 <div className="p-3 shrink-0">
+                    {/* Selection preview */}
+                    {selection && (
+                        <div className="mb-2 flex items-start gap-2 rounded-lg border border-border bg-muted/50 p-2">
+                            <Quote className="mt-0.5 size-3.5 shrink-0 rotate-180 text-muted-foreground" />
+                            <p className="flex-1 text-xs text-muted-foreground line-clamp-3">
+                                {selection}
+                            </p>
+                            <Quote className="mt-0.5 size-3.5 shrink-0 self-end text-muted-foreground" />
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="size-5 shrink-0"
+                                onClick={onClearSelection}
+                            >
+                                <X className="size-3" />
+                            </Button>
+                        </div>
+                    )}
+
                     <PromptInput
                         value={input}
                         onValueChange={setInput}

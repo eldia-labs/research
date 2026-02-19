@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
+import "react-pdf/dist/Page/TextLayer.css";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +23,12 @@ const ReactPdfPage = dynamic(
 
 interface PdfViewerProps {
     file: File | null;
+    onSelection?: (text: string) => void;
 }
 
 const PDF_PAGE_RATIO = 612 / 792;
 
-export function PdfViewer({ file }: PdfViewerProps) {
+export function PdfViewer({ file, onSelection }: PdfViewerProps) {
     const [fileUrl, setFileUrl] = useState<string | null>(null);
     const [numPages, setNumPages] = useState(0);
     const [pageNumber, setPageNumber] = useState(1);
@@ -51,6 +53,33 @@ export function PdfViewer({ file }: PdfViewerProps) {
         setFitWidth(false);
         return () => URL.revokeObjectURL(url);
     }, [file]);
+
+    // Send selected text to chat on mouseup
+    useEffect(() => {
+        const container = scrollContainerRef.current;
+        if (!container) return;
+
+        function handleMouseUp() {
+            const sel = window.getSelection();
+            if (!sel || sel.isCollapsed || !container) {
+                onSelection?.("");
+                return;
+            }
+
+            const anchorNode = sel.anchorNode;
+            if (!anchorNode || !container.contains(anchorNode)) {
+                return;
+            }
+
+            const text = sel.toString().trim();
+            onSelection?.(text || "");
+        }
+
+        container.addEventListener("mouseup", handleMouseUp);
+        return () => {
+            container.removeEventListener("mouseup", handleMouseUp);
+        };
+    }, [fileUrl, onSelection]);
 
     useEffect(() => {
         const scrollNode = scrollContainerRef.current;
@@ -239,7 +268,10 @@ export function PdfViewer({ file }: PdfViewerProps) {
                 </Button>
             </div>
 
-            <div ref={scrollContainerRef} className="flex-1 min-h-0 overflow-auto bg-muted/20">
+            <div
+                ref={scrollContainerRef}
+                className="relative flex-1 min-h-0 overflow-auto bg-muted/20"
+            >
                 <div className="mx-auto w-full max-w-full p-3">
                     <div className="flex flex-col items-center gap-3">
                         <ReactPdfDocument
@@ -254,7 +286,7 @@ export function PdfViewer({ file }: PdfViewerProps) {
                                         pageNumber={index + 1}
                                         width={displayWidth}
                                         renderAnnotationLayer={false}
-                                        renderTextLayer={false}
+                                        renderTextLayer={true}
                                         loading=""
                                     />
                                 </div>
