@@ -101,6 +101,11 @@ export default function Page() {
         setTextSelection(null);
     }, []);
 
+    const handleFileClick = useCallback((index: number) => {
+        setActiveIndex(index);
+        setTextSelection(null);
+    }, []);
+
     return (
         <>
             <div className="hidden xl:flex h-screen w-screen overflow-hidden overscroll-none">
@@ -111,7 +116,7 @@ export default function Page() {
                     width={sidebarWidth}
                     onWidthChange={handleSidebarWidthChange}
                     onFileAdd={handleAddFile}
-                    onFileClick={setActiveIndex}
+                    onFileClick={handleFileClick}
                 />
 
                 <div className="h-full min-w-[480px] flex-[2]">
@@ -141,7 +146,7 @@ export default function Page() {
                                 setActiveSection("pdf");
                             }}
                             onFileClick={(i) => {
-                                setActiveIndex(i);
+                                handleFileClick(i);
                                 setActiveSection("pdf");
                             }}
                         />
