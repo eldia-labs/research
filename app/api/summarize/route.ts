@@ -34,6 +34,7 @@ export async function POST(request: Request) {
 
   const file = formData.get("file") as File | null;
   const prompt = formData.get("prompt") as string | null;
+  const historyRaw = formData.get("history") as string | null;
   const provider = (formData.get("provider") as Provider) ?? "ollama";
   const modelId = (formData.get("model") as string) ?? "ollama";
 
@@ -42,6 +43,15 @@ export async function POST(request: Request) {
       { error: "Both a PDF file and a prompt are required." },
       { status: 400 },
     );
+  }
+
+  let history: { role: string; content: string }[] = [];
+  if (historyRaw) {
+    try {
+      history = JSON.parse(historyRaw);
+    } catch {
+      // ignore malformed history
+    }
   }
 
   if (file.type !== "application/pdf") {
@@ -73,23 +83,26 @@ export async function POST(request: Request) {
     const endpoint = buildEndpoint(provider);
     const model = resolveModel(provider, modelId);
 
+    // Build the messages array with full conversation history
+    const systemMessage = {
+      role: "system",
+      content: `You are an academic research assistant. The user has uploaded a research paper. Answer their questions about the paper, explain concepts, summarize sections, and provide insights based on the paper's content. Be clear, accurate, and concise.\n\n--- Research Paper Content ---\n${paperText}`,
+    };
+
+    // Include previous conversation turns for context
+    const conversationMessages = [
+      systemMessage,
+      ...history.map((msg) => ({ role: msg.role, content: msg.content })),
+      { role: "user", content: prompt },
+    ];
+
     const llmRes = await fetch(endpoint, {
       method: "POST",
       headers: buildHeaders(provider),
       body: JSON.stringify({
         model,
         stream: true,
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an academic research assistant. You help summarize research papers clearly and concisely.",
-          },
-          {
-            role: "user",
-            content: `${prompt}\n\n--- Research Paper Content ---\n${paperText}`,
-          },
-        ],
+        messages: conversationMessages,
       }),
     });
 

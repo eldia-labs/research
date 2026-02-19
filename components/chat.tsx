@@ -75,6 +75,15 @@ export function Chat({ file, messages, onMessagesChange, width, defaultWidth = D
         formData.append("prompt", userMessage.content);
         formData.append("provider", model.provider);
         formData.append("model", model.id);
+        // Send conversation history so the model has context of previous turns
+        if (messages.length > 0) {
+            formData.append(
+                "history",
+                JSON.stringify(
+                    messages.map((m) => ({ role: m.role, content: m.content }))
+                )
+            );
+        }
 
         let reasoning = "";
         let content = "";
