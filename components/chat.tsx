@@ -247,10 +247,10 @@ export function Chat({ file, messages, selection, width, onMessagesChange, onWid
                                     <div className="max-w-[85%] space-y-1">
                                         {msg.quotedText && (
                                             <div className="rounded-lg border border-primary/20 bg-primary/5 px-3 py-2 text-xs text-primary-foreground/70">
-                                                <div className="flex items-start gap-1.5">
-                                                    <Quote className="mt-0.5 size-3 shrink-0 rotate-180 opacity-60" />
-                                                    <p className="line-clamp-4 whitespace-pre-wrap italic">{msg.quotedText}</p>
-                                                    <Quote className="mt-0.5 size-3 shrink-0 self-end opacity-60" />
+                                                <div className="flex items-center gap-1.5">
+                                                    <Quote className="size-3 shrink-0 rotate-180 opacity-60" />
+                                                    <p className="line-clamp-4 whitespace-pre-wrap">{msg.quotedText}</p>
+                                                    <Quote className="size-3 shrink-0 opacity-60" />
                                                 </div>
                                             </div>
                                         )}
@@ -307,12 +307,12 @@ export function Chat({ file, messages, selection, width, onMessagesChange, onWid
                 <div className="p-3 shrink-0">
                     {/* Selection preview */}
                     {selection && (
-                        <div className="mb-2 flex items-start gap-2 rounded-lg border border-border bg-muted/50 p-2">
-                            <Quote className="mt-0.5 size-3.5 shrink-0 rotate-180 text-muted-foreground" />
+                        <div className="mb-2 flex items-center gap-2 rounded-lg border border-border bg-muted/50 p-2">
+                            <Quote className="size-3.5 shrink-0 rotate-180 text-muted-foreground" />
                             <p className="flex-1 text-xs text-muted-foreground line-clamp-3">
                                 {selection}
                             </p>
-                            <Quote className="mt-0.5 size-3.5 shrink-0 self-end text-muted-foreground" />
+                            <Quote className="size-3.5 shrink-0 text-muted-foreground" />
                             <Button
                                 type="button"
                                 variant="ghost"
