@@ -1,5 +1,5 @@
-import type { Provider } from "@/lib/models";
 import { extractText } from "unpdf";
+import type { Provider } from "@/lib/models";
 
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL;
 const OLLAMA_MODEL = process.env.OLLAMA_MODEL;
@@ -17,8 +17,9 @@ function buildHeaders(provider: Provider): Record<string, string> {
     "Content-Type": "application/json",
   };
   if (provider === "openrouter" && OPENROUTER_API_KEY) {
-    headers["Authorization"] = `Bearer ${OPENROUTER_API_KEY}`;
-    headers["HTTP-Referer"] = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    headers.Authorization = `Bearer ${OPENROUTER_API_KEY}`;
+    headers["HTTP-Referer"] =
+      process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
     headers["X-Title"] = "research";
   }
   return headers;
@@ -109,7 +110,10 @@ export async function POST(request: Request) {
     if (!llmRes.ok || !llmRes.body) {
       const text = await llmRes.text();
       const label = provider === "openrouter" ? "OpenRouter" : "Ollama";
-      return Response.json({ error: `${label} error: ${text}` }, { status: 502 });
+      return Response.json(
+        { error: `${label} error: ${text}` },
+        { status: 502 },
+      );
     }
 
     // Transform the SSE stream into our own JSON-lines stream

@@ -28,10 +28,7 @@ export const OLLAMA_GROUP: ModelGroup = {
 
 export const DEFAULT_MODEL: Model = OLLAMA_GROUP.models[0];
 
-export function findModel(
-  id: string,
-  groups: ModelGroup[],
-): Model | undefined {
+export function findModel(id: string, groups: ModelGroup[]): Model | undefined {
   for (const group of groups) {
     const found = group.models.find((m) => m.id === id);
     if (found) return found;

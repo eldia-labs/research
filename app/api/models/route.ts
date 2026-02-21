@@ -1,4 +1,4 @@
-import { OLLAMA_GROUP, type Model } from "@/lib/models";
+import { type Model, OLLAMA_GROUP } from "@/lib/models";
 
 interface OpenRouterModel {
   id: string;
@@ -68,8 +68,7 @@ export async function GET() {
     cache = { data: models, ts: Date.now() };
     return Response.json(models);
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown error";
+    const message = error instanceof Error ? error.message : "Unknown error";
     return Response.json(
       { error: `Failed to fetch models: ${message}` },
       { status: 500 },
