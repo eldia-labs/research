@@ -55,6 +55,8 @@ export default function Page() {
   }
 
   function handleAddFile(file: File) {
+    setTextSelection(null);
+
     const existingIndex = files.findIndex(
       (existingFile) =>
         existingFile.name === file.name &&

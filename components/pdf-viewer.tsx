@@ -42,6 +42,8 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
+    window.getSelection()?.removeAllRanges();
+
     if (!file) {
       setFileUrl(null);
       setNumPages(0);
@@ -59,6 +61,8 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
 
   // Send selected text to chat on mouseup
   useEffect(() => {
+    if (!fileUrl) return;
+
     const container = scrollContainerRef.current;
     if (!container) return;
 
@@ -77,7 +81,7 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
     return () => {
       container.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [onSelection]);
+  }, [onSelection, fileUrl]);
 
   useEffect(() => {
     const scrollNode = scrollContainerRef.current;
