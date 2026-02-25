@@ -1,5 +1,6 @@
 "use client";
 
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronLeft, ChevronRight, Download, Minus, Plus } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -28,6 +29,7 @@ interface PdfViewerProps {
 }
 
 const PDF_PAGE_RATIO = 612 / 792;
+const PDF_PAGE_GAP = 12;
 
 export function PdfViewer({ file, onSelection }: PdfViewerProps) {
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -84,39 +86,6 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
   }, [onSelection, fileUrl]);
 
   useEffect(() => {
-    const scrollNode = scrollContainerRef.current;
-    if (!scrollNode || numPages <= 0) return;
-
-    const pageElements =
-      scrollNode.querySelectorAll<HTMLElement>("[data-pdf-page]");
-    if (!pageElements.length) return;
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const mostVisible = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-        if (!mostVisible) return;
-        const pageValue = Number.parseInt(
-          (mostVisible.target as HTMLElement).dataset.pdfPage ?? "",
-          10,
-        );
-        if (!Number.isNaN(pageValue)) {
-          setPageNumber(pageValue);
-        }
-      },
-      {
-        root: scrollNode,
-        threshold: [0.5, 0.75],
-      },
-    );
-
-    pageElements.forEach((element) => observer.observe(element));
-    return () => observer.disconnect();
-  }, [numPages]);
-
-  useEffect(() => {
     if (!fileUrl) return;
 
     const containerNode = scrollContainerRef.current;
@@ -157,8 +126,56 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
     return Math.max(Math.round(singlePageWidthPx * (zoom / 100)), 120);
   }, [fitWidth, fitWidthPx, singlePageWidthPx, zoom]);
 
+  const estimatedPageWidth = useMemo(() => {
+    if (displayWidth) return displayWidth;
+    if (fitWidthPx) return fitWidthPx;
+    if (singlePageWidthPx) return singlePageWidthPx;
+    if (viewerWidth > 0) return Math.max(viewerWidth - 24, 120);
+    return 120;
+  }, [displayWidth, fitWidthPx, singlePageWidthPx, viewerWidth]);
+
+  const estimatedPageHeight = useMemo(
+    () => Math.round(estimatedPageWidth / PDF_PAGE_RATIO) + PDF_PAGE_GAP,
+    [estimatedPageWidth],
+  );
+
+  const virtualizer = useVirtualizer({
+    count: numPages,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => estimatedPageHeight,
+    overscan: 2,
+    onChange: (instance) => {
+      const virtualItems = instance.getVirtualItems();
+      if (!virtualItems.length) return;
+
+      const viewportHeight = instance.scrollRect?.height ?? 0;
+      const scrollOffset = instance.scrollOffset ?? 0;
+      const viewportCenter = scrollOffset + viewportHeight / 2;
+
+      let currentItem = virtualItems[0];
+      for (const item of virtualItems) {
+        if (item.start <= viewportCenter && item.end >= viewportCenter) {
+          currentItem = item;
+          break;
+        }
+
+        const itemDistance = Math.abs(item.start - viewportCenter);
+        const currentDistance = Math.abs(currentItem.start - viewportCenter);
+        if (itemDistance < currentDistance) {
+          currentItem = item;
+        }
+      }
+
+      const nextPage = currentItem.index + 1;
+      setPageNumber((currentPage) =>
+        currentPage === nextPage ? currentPage : nextPage,
+      );
+    },
+  });
+
   const canGoPrevious = pageNumber > 1;
   const canGoNext = pageNumber < numPages;
+  const virtualPages = virtualizer.getVirtualItems();
 
   const handleLoadSuccess = ({
     numPages: loadedPages,
@@ -175,12 +192,10 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
     if (numPages <= 0) return;
     const clampedPage = Math.min(Math.max(nextPage, 1), numPages);
     setPageNumber(clampedPage);
-
-    const scrollNode = scrollContainerRef.current;
-    const pageElement = scrollNode?.querySelector<HTMLElement>(
-      `[data-pdf-page="${clampedPage}"]`,
-    );
-    pageElement?.scrollIntoView({ behavior: "smooth", block: "start" });
+    virtualizer.scrollToIndex(clampedPage - 1, {
+      align: "start",
+      behavior: "smooth",
+    });
   };
 
   const handlePageInputChange = (value: string) => {
@@ -297,7 +312,7 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
         className="relative flex-1 min-h-0 overflow-auto bg-muted/20"
       >
         <div className="mx-auto w-full max-w-full p-3">
-          <div className="flex flex-col items-center gap-3">
+          <div className="w-full">
             <ReactPdfDocument
               file={fileUrl}
               onLoadSuccess={handleLoadSuccess}
@@ -312,21 +327,39 @@ export function PdfViewer({ file, onSelection }: PdfViewerProps) {
                 </p>
               }
             >
-              {Array.from({ length: numPages }, (_, index) => (
-                <div
-                  key={index + 1}
-                  data-pdf-page={index + 1}
-                  className="w-full flex justify-center"
-                >
-                  <ReactPdfPage
-                    pageNumber={index + 1}
-                    width={displayWidth}
-                    renderAnnotationLayer={false}
-                    renderTextLayer={true}
-                    loading=""
-                  />
-                </div>
-              ))}
+              <div
+                className="relative w-full"
+                style={{ height: `${virtualizer.getTotalSize()}px` }}
+              >
+                {virtualPages.map((virtualPage) => {
+                  const pdfPageNumber = virtualPage.index + 1;
+                  return (
+                    <div
+                      key={pdfPageNumber}
+                      data-index={virtualPage.index}
+                      data-pdf-page={pdfPageNumber}
+                      className="absolute left-0 top-0 w-full"
+                      ref={virtualizer.measureElement}
+                      style={{
+                        transform: `translateY(${virtualPage.start}px)`,
+                      }}
+                    >
+                      <div
+                        className="flex w-full justify-center"
+                        style={{ paddingBottom: `${PDF_PAGE_GAP}px` }}
+                      >
+                        <ReactPdfPage
+                          pageNumber={pdfPageNumber}
+                          width={displayWidth}
+                          renderAnnotationLayer={false}
+                          renderTextLayer={true}
+                          loading=""
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </ReactPdfDocument>
           </div>
         </div>
