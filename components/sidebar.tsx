@@ -35,11 +35,12 @@ export function Sidebar({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
 
-  const { handleMouseDown, handleDoubleClick, expand } = useResizablePanel({
-    width,
-    side: "right",
-    onWidthChange,
-  });
+  const { handleMouseDown, handleDoubleClick, expand, isDragging } =
+    useResizablePanel({
+      width,
+      side: "right",
+      onWidthChange,
+    });
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const selected = e.target.files?.[0];
@@ -198,6 +199,7 @@ export function Sidebar({
       <ResizeHandle
         label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="hidden xl:flex"
+        isDragging={isDragging}
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
       />

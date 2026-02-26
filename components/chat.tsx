@@ -66,11 +66,12 @@ export function Chat({
 
   const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
 
-  const { handleMouseDown, handleDoubleClick, expand } = useResizablePanel({
-    width,
-    side: "left",
-    onWidthChange,
-  });
+  const { handleMouseDown, handleDoubleClick, expand, isDragging } =
+    useResizablePanel({
+      width,
+      side: "left",
+      onWidthChange,
+    });
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -219,6 +220,7 @@ export function Chat({
         <ResizeHandle
           label="Expand chat"
           className="flex"
+          isDragging={isDragging}
           onMouseDown={handleMouseDown}
           onDoubleClick={handleDoubleClick}
         />
@@ -242,6 +244,7 @@ export function Chat({
       <ResizeHandle
         label="Collapse chat"
         className="hidden xl:flex"
+        isDragging={isDragging}
         onMouseDown={handleMouseDown}
         onDoubleClick={handleDoubleClick}
       />

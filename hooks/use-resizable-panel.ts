@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 
 export const MIN_PANEL_WIDTH = 180;
 export const COLLAPSED_WIDTH = 48;
@@ -18,11 +18,13 @@ export function useResizablePanel({
   onWidthChange,
 }: UseResizablePanelOptions) {
   const collapsed = width !== undefined && width <= COLLAPSED_WIDTH;
+  const [isDragging, setIsDragging] = useState(false);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
       if (!onWidthChange) return;
       e.preventDefault();
+      setIsDragging(true);
       const startX = e.clientX;
       const startW = collapsed
         ? COLLAPSED_WIDTH
@@ -39,6 +41,7 @@ export function useResizablePanel({
       };
 
       const onMouseUp = () => {
+        setIsDragging(false);
         document.removeEventListener("mousemove", onMouseMove);
         document.removeEventListener("mouseup", onMouseUp);
         document.body.style.removeProperty("cursor");
@@ -61,5 +64,5 @@ export function useResizablePanel({
     onWidthChange?.(DEFAULT_PANEL_WIDTH);
   }, [onWidthChange]);
 
-  return { handleMouseDown, handleDoubleClick, expand };
+  return { handleMouseDown, handleDoubleClick, expand, isDragging };
 }
